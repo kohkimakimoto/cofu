@@ -12,7 +12,7 @@
 
 * `path` (string) (default: name of resource):
 
-* `source` (string): Path to the file source. This is automatically configured by `path` attribute at default. For example, If the `path` is `/etc/php.ini`, `source` is `etc/php.ini` that is a relative path from the directory which includes this recipe.
+* `source` (string): Path to the file source. This is automatically configured by `path` attribute at default. For example, If the `path` is `/etc/php.ini`, `source` is `files/etc/php.ini` that is a relative path from the directory which includes this recipe.
 
 * `mode` (string):
 
