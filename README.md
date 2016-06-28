@@ -4,8 +4,6 @@ Minimum configuration management tool written in Go.
 
 This software is highly inspired by [itamae-kitchen/itamae](https://github.com/itamae-kitchen/itamae).
 
-> **Now, it is on unstable stage. Sometimes API and code may be broken.**
-
 ## Installation
 
 Cofu is provided as a single binary. You can download it and drop it in your $PATH.
