@@ -1,10 +1,13 @@
 package detector
 
 import (
+	"bufio"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/kohkimakimoto/cofu/infra/backend"
 	"github.com/kohkimakimoto/cofu/infra/command"
-	"regexp"
-	"strings"
 )
 
 type Detector func(*backend.Cmd) command.CommandFactory
@@ -14,6 +17,7 @@ var DefaultDetectors []Detector
 func init() {
 	DefaultDetectors = []Detector{
 		DetectRedhat,
+		DetectDebian,
 		DetectDarwin,
 		DetectUnknown,
 	}
@@ -80,6 +84,50 @@ func DetectRedhat(c *backend.Cmd) command.CommandFactory {
 		return ret
 	}
 
+	return nil
+}
+
+func DetectDebian(c *backend.Cmd) command.CommandFactory {
+	if c.RunCommand("ls /etc/os-release").Success() {
+		var family string
+		var release string
+		stdout := c.RunCommand("cat /etc/os-release").Stdout
+		scanner := bufio.NewScanner(&stdout)
+		for scanner.Scan() {
+			line := scanner.Text()
+			terms := strings.SplitN(line, "=", 2)
+			if len(terms) == 2 {
+				switch terms[0] {
+				case "ID":
+					family = terms[1]
+				case "VERSION_ID":
+					release = strings.Trim(terms[1], `"`)
+				}
+			}
+		}
+		if family != "" && release != "" {
+			var ret command.CommandFactory
+			if family == "debian" {
+				intRelease, _ := strconv.ParseInt(release, 10, 64)
+				if intRelease >= 8 {
+					ret = &command.DebianV8Command{}
+				} else {
+					ret = &command.DebianV6Command{}
+				}
+			} else if family == "ubuntu" {
+				if release >= "16.04" {
+					ret = &command.UbuntuV1604Command{}
+				} else {
+					ret = &command.UbuntuV1204Command{}
+				}
+			}
+			if ret != nil {
+				ret.SetOSFamily(family)
+				ret.SetOSRelease(release)
+				return ret
+			}
+		}
+	}
 	return nil
 }
 
