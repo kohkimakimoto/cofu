@@ -42,7 +42,6 @@ Requirements
 
 * Go 1.6 or later
 * [Gom](https://github.com/mattn/gom)
-* [direnv](https://github.com/direnv/direnv)
 
 Installing dependences
 
