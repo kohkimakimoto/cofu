@@ -3,7 +3,7 @@ package resource
 import (
 	"bytes"
 	"github.com/kohkimakimoto/cofu/cofu"
-	"github.com/kohkimakimoto/cofu/gluamapper"
+	"github.com/kohkimakimoto/cofu/support/gluamapper"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
