@@ -1,4 +1,4 @@
-.PHONY: default dev dist packaging packaging_destroy fmt test testv deps updatedeps
+.PHONY: default dev dist packaging packaging_destroy fmt test testv deps deps_update
 
 default: dev
 
@@ -15,13 +15,13 @@ packaging_destroy:
 	@sh -c "cd $(CURDIR)/_build/packaging/rpm && vagrant destroy -f"
 
 fmt:
-	go fmt ./...
+	go fmt $$(go list ./... | grep -v vendor)
 
 test:
-	go test ./... -cover
+	go test -cover $$(go list ./... | grep -v vendor)
 
 testv:
-	go test ./... -v
+	go test -cover -v $$(go list ./... | grep -v vendor)
 
 test_integration:
 	cd _tests && \
@@ -34,4 +34,4 @@ deps:
 	gom install
 
 deps_update:
-	rm Gomfile.lock; rm -rf _vendor; gom install && gom lock
+	rm Gomfile.lock; rm -rf vendor; gom install && gom lock

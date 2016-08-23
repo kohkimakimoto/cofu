@@ -3,10 +3,14 @@ Thumbs.db
 .tags*
 ._*
 *.iml
-/_vendor
+/vendor
 .vagrant
+
 /_work
+
 /_build/dev/*
 /_build/dist/*
+
+!.gitkeep
 
 !.gitkeep

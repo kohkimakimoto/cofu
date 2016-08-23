@@ -40,7 +40,7 @@ But, to support running on multi platforms in future, Cofu is designed to execut
 
 Requirements
 
-* Go 1.6 or later
+* Go 1.7 or later (my development env)
 * [Gom](https://github.com/mattn/gom)
 
 Installing dependences

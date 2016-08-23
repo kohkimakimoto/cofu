@@ -2,18 +2,18 @@ package cofu
 
 import (
 	"github.com/cjoudrey/gluahttp"
+	"github.com/kohkimakimoto/cofu/infra/backend"
 	"github.com/kohkimakimoto/gluaenv"
 	"github.com/kohkimakimoto/gluafs"
-	"github.com/kohkimakimoto/gluajson"
 	"github.com/kohkimakimoto/gluaquestion"
 	"github.com/kohkimakimoto/gluatemplate"
 	"github.com/kohkimakimoto/gluayaml"
 	"github.com/kohkimakimoto/loglv"
+	gluajson "github.com/layeh/gopher-json"
+	"github.com/yuin/gluare"
 	"github.com/yuin/gopher-lua"
 	"log"
 	"net/http"
-
-	"github.com/kohkimakimoto/cofu/infra/backend"
 	"path/filepath"
 	"strings"
 )
@@ -26,6 +26,16 @@ func openLibs(L *lua.LState) {
 	L.SetGlobal("define", L.NewFunction(fnDefine))
 
 	// buit-in packages
+	L.PreloadModule("json", gluajson.Loader)
+	L.PreloadModule("fs", gluafs.Loader)
+	L.PreloadModule("yaml", gluayaml.Loader)
+	L.PreloadModule("template", gluatemplate.Loader)
+	L.PreloadModule("question", gluaquestion.Loader)
+	L.PreloadModule("env", gluaenv.Loader)
+	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
+	L.PreloadModule("re", gluare.Loader)
+
+	// for BC
 	L.PreloadModule("glua.json", gluajson.Loader)
 	L.PreloadModule("glua.fs", gluafs.Loader)
 	L.PreloadModule("glua.yaml", gluayaml.Loader)
@@ -33,6 +43,8 @@ func openLibs(L *lua.LState) {
 	L.PreloadModule("glua.question", gluaquestion.Loader)
 	L.PreloadModule("glua.env", gluaenv.Loader)
 	L.PreloadModule("glua.http", gluahttp.NewHttpModule(&http.Client{}).Loader)
+	L.PreloadModule("glua.re", gluare.Loader)
+
 }
 
 const lCommandResultClass = "CommandResult*"
