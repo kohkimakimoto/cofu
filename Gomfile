@@ -1,3 +1,4 @@
+# lua libraries
 gom "github.com/yuin/gopher-lua"
 gom "github.com/yuin/gluare"
 gom "github.com/kohkimakimoto/gluayaml"
@@ -9,6 +10,7 @@ gom "github.com/layeh/gopher-json"
 gom "github.com/cjoudrey/gluahttp"
 gom "github.com/otm/gluash"
 
+# misc
 gom "github.com/kohkimakimoto/loglv"
 gom "github.com/fatih/color"
 gom "github.com/yookoala/realpath"

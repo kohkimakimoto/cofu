@@ -1,9 +1,13 @@
 root = true
 
 [*]
+indent_size = 4
 indent_style = space
 end_of_line = lf
 charset = utf-8
+
+[*.sh]
+indent_size = 2
 
 [*.go]
 indent_style = tab
