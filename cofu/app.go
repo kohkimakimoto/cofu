@@ -220,6 +220,34 @@ func (app *App) Run() error {
 		return nil
 	}
 
+	// preprocess for resources
+	for _, r := range app.Resources {
+		// checks required attributes
+		for _, definedAttribute := range r.ResourceType.Attributes {
+			if definedAttribute.IsRequired() {
+				if _, ok := r.Attributes[definedAttribute.GetName()]; !ok {
+					return fmt.Errorf("resource '%s': '%s' attribute is required but it is not set.", r.Desc(), definedAttribute.GetName())
+				}
+			}
+		}
+
+		// parse and validate notifies attribute
+		if r.GetRawAttribute("notifies") != nil {
+			r.Notifications = r.GetRawAttribute("notifies").([]*Notification)
+			for _, n := range r.Notifications {
+				n.DefinedInResource = r
+				if err := n.Validate(); err != nil {
+					return err
+				}
+			}
+		}
+
+		// set default diff function it it does not have specific func.
+		if r.ResourceType.ShowDifferences == nil {
+			r.ResourceType.ShowDifferences = DefaultShowDifferences
+		}
+	}
+
 	log.Printf("==> Starting " + Name + "...")
 
 	if loglv.IsDebug() {

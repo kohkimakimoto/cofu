@@ -21,36 +21,51 @@ func (resourceType *ResourceType) LGFunction() func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 		name := L.CheckString(1)
 
-		// procedural style
-		if L.GetTop() == 2 {
-			tb := L.CheckTable(2)
-			resourceType.registerResource(L, name, tb)
+		if L.GetTop() == 1 {
+			// object or DSL style
+			r := resourceType.registerResource(L, name)
+			L.Push(newLResource(L, r))
 
-			return 0
+			return 1
+		} else if L.GetTop() == 2 {
+			// function style
+			tb := L.CheckTable(2)
+			r := resourceType.registerResource(L, name)
+			setupResource(r, tb)
+			L.Push(newLResource(L, r))
+
+			return 1
 		}
 
-		// DSL style
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			tb := L.CheckTable(1)
-			resourceType.registerResource(L, name, tb)
-
-			return 0
-		}))
+		//// procedural style
+		//if L.GetTop() == 2 {
+		//	tb := L.CheckTable(2)
+		//	resourceType.registerResource(L, name, tb)
+		//
+		//	return 0
+		//}
+		//
+		//// DSL style
+		//L.Push(L.NewFunction(func(L *lua.LState) int {
+		//	tb := L.CheckTable(1)
+		//	resourceType.registerResource(L, name, tb)
+		//
+		//	return 0
+		//}))
 
 		return 1
 	}
 }
 
-func (resourceType *ResourceType) registerResource(L *lua.LState, name string, attrs *lua.LTable) {
+func (resourceType *ResourceType) registerResource(L *lua.LState, name string) *Resource {
 	app := GetApp(L)
-
 	r := NewResource(name, resourceType, app)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) compiling resource '%s'", r.Desc())
+		log.Printf("    (Debug) registering resource '%s'", r.Desc())
 	}
 
-	// set defaults
+	// set default attributes
 	for _, definedAttribute := range resourceType.Attributes {
 		if definedAttribute.HasDefault() {
 			if loglv.IsDebug() {
@@ -78,57 +93,97 @@ func (resourceType *ResourceType) registerResource(L *lua.LState, name string, a
 		}
 	}
 
-	// set attributes.
-	attrs.ForEach(func(key lua.LValue, value lua.LValue) {
-		lAttributeName, ok := key.(lua.LString)
-		if !ok {
+	app.RegisterResource(r)
+
+	return r
+}
+
+// Lua Resource Class
+const lResourceClass = "Resource*"
+
+func loadLResourceClass(L *lua.LState) {
+	mt := L.NewTypeMetatable(lResourceClass)
+
+	L.SetField(mt, "__call", L.NewFunction(resourceCall))
+	L.SetField(mt, "__index", L.NewFunction(resourceIndex))
+	L.SetField(mt, "__newindex", L.NewFunction(resourceNewindex))
+}
+
+func updateResource(r *Resource, attributeName string, value lua.LValue) {
+	var attribute Attribute
+	for _, definedAttribute := range r.ResourceType.Attributes {
+		if definedAttribute.GetName() == attributeName {
+			attribute = definedAttribute
+			break
+		}
+	}
+
+	if attribute == nil {
+		panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
+	}
+
+	r.AttributesLValues[attribute.GetName()] = value
+	r.Attributes[attribute.GetName()] = attribute.ToGoValue(value)
+}
+
+func setupResource(r *Resource, attributes *lua.LTable) {
+	attributes.ForEach(func(k, v lua.LValue) {
+		if kstr, ok := toString(k); ok {
+			updateResource(r, kstr, v)
+		} else {
 			panic(fmt.Sprintf("'%s' An attribute must be string", r.Desc()))
 		}
-		attributeName := lAttributeName.String()
-
-		var attribute Attribute
-		for _, definedAttribute := range resourceType.Attributes {
-			if definedAttribute.GetName() == attributeName {
-				attribute = definedAttribute
-				break
-			}
-		}
-
-		if attribute == nil {
-			panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
-		}
-
-		r.Attributes[attribute.GetName()] = attribute.ToGoValue(value)
-
-		attribute = nil
 	})
+}
 
-	// checks required attributes
-	for _, definedAttribute := range resourceType.Attributes {
-		if definedAttribute.IsRequired() {
-			if _, ok := r.Attributes[definedAttribute.GetName()]; !ok {
-				panic(fmt.Sprintf("'%s' attribute is required but it is not set.", definedAttribute.GetName()))
-			}
-		}
+func newLResource(L *lua.LState, r *Resource) *lua.LUserData {
+	ud := L.NewUserData()
+	ud.Value = r
+	L.SetMetatable(ud, L.GetTypeMetatable(lResourceClass))
+
+	return ud
+}
+
+func checkResource(L *lua.LState) *Resource {
+	ud := L.CheckUserData(1)
+	if result, ok := ud.Value.(*Resource); ok {
+		return result
+	}
+	L.ArgError(1, "Resource expected")
+
+	return nil
+}
+
+func resourceCall(L *lua.LState) int {
+	r := checkResource(L)
+	tb := L.CheckTable(2)
+
+	setupResource(r, tb)
+
+	return 0
+}
+
+func resourceIndex(L *lua.LState) int {
+	r := checkResource(L)
+	index := L.CheckString(2)
+
+	v, ok := r.AttributesLValues[index]
+	if v == nil || !ok {
+		v = lua.LNil
 	}
 
-	// parse and validate notifies attribute
-	if r.GetRawAttribute("notifies") != nil {
-		r.Notifications = r.GetRawAttribute("notifies").([]*Notification)
-		for _, n := range r.Notifications {
-			n.DefinedInResource = r
-			if err := n.Validate(); err != nil {
-				panic(err)
-			}
-		}
-	}
+	L.Push(v)
+	return 1
+}
 
-	// set default diff function it it does not have specific func.
-	if resourceType.ShowDifferences == nil {
-		resourceType.ShowDifferences = DefaultShowDifferences
-	}
+func resourceNewindex(L *lua.LState) int {
+	r := checkResource(L)
+	index := L.CheckString(2)
+	value := L.CheckAny(3)
 
-	app.RegisterResource(r)
+	updateResource(r, index, value)
+
+	return 0
 }
 
 type ResourceAction func(*Resource) error

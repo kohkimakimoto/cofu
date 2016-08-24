@@ -41,6 +41,14 @@ func toGoValue(lv lua.LValue) interface{} {
 	}
 }
 
+func toString(v lua.LValue) (string, bool) {
+	if lv, ok := v.(lua.LString); ok {
+		return string(lv), true
+	} else {
+		return "", false
+	}
+}
+
 // currentDir returns a directory path that includes lua source file which is executed now.
 func currentDir(L *lua.LState) string {
 	// same: debug.getinfo(2,'S').source

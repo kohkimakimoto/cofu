@@ -19,6 +19,7 @@ import (
 )
 
 func openLibs(L *lua.LState) {
+	loadLResourceClass(L)
 	loadLCommandResultClass(L)
 
 	L.SetGlobal("run_command", L.NewFunction(fnRunCommand))

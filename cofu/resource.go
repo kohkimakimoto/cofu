@@ -20,6 +20,7 @@ type Resource struct {
 	// Basepath is a directory path that includes recipe file defines this resource.
 	Basepath          string
 	Attributes        map[string]interface{}
+	AttributesLValues map[string]lua.LValue
 	CurrentAttributes map[string]interface{}
 	Notifications     []*Notification
 	ResourceType      *ResourceType
@@ -33,6 +34,7 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 	return &Resource{
 		Name:              name,
 		Attributes:        map[string]interface{}{},
+		AttributesLValues: map[string]lua.LValue{},
 		CurrentAttributes: map[string]interface{}{},
 		ResourceType:      resourceType,
 		App:               app,
