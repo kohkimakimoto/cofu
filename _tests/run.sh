@@ -58,7 +58,7 @@ if [ -z "$DOCKER_IMAGE" ]; then
   unzip -d ./_build/dist ./_build/dist/cofu_linux_amd64.zip
   trap "rm -f ./_build/dist/cofu" 0
 
-  for platform in 'centos:centos6' 'centos:centos7' 'debian:7' 'debian:8'; do
+  for platform in 'centos:centos6' 'centos:centos7' 'debian:7' 'debian:8' 'ubuntu:12.04' 'ubuntu:14.04' 'ubuntu:16.04'; do
     docker run \
       --privileged  \
       --env DOCKER_IMAGE=${platform}  \
