@@ -24,7 +24,7 @@
 directory "/path/to/directory" {
     action = "create",
     mode = "0755",
-    owner = "root"
+    owner = "root",
     group = "root",
 }
 ```

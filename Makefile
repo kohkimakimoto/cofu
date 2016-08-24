@@ -24,11 +24,7 @@ testv:
 	go test -cover -v $$(go list ./... | grep -v vendor)
 
 test_integration:
-	cd _tests && \
-    vagrant destroy -f && \
-    vagrant up && \
-	vagrant ssh centos-6 -c "cd /home/vagrant/src/github.com/kohkimakimoto/cofu/_tests && sudo bash run.sh" && \
-    vagrant ssh centos-7 -c "cd /home/vagrant/src/github.com/kohkimakimoto/cofu/_tests && sudo bash run.sh"
+	@bash $(CURDIR)/_tests/run.sh
 
 deps:
 	gom install
