@@ -95,6 +95,7 @@ else
   cd _tests
   cofu ./test_resource_directory/recipe.lua
   cofu ./test_resource_execute/recipe.lua
+  cofu ./test_resource_template/recipe.lua
 
 fi
 
