@@ -58,7 +58,7 @@ if [ -z "$DOCKER_IMAGE" ]; then
   unzip -d ./_build/dist ./_build/dist/cofu_linux_amd64.zip
   trap "rm -f ./_build/dist/cofu" 0
 
-  for platform in 'centos:centos6' 'centos:centos7' 'debian:7' 'debian:8' 'ubuntu:12.04' 'ubuntu:14.04' 'ubuntu:16.04'; do
+  for platform in 'centos:centos5' 'centos:centos6' 'centos:centos7' 'debian:7' 'debian:8' 'ubuntu:12.04' 'ubuntu:14.04' 'ubuntu:16.04'; do
     docker run \
       --privileged  \
       --env DOCKER_IMAGE=${platform}  \
@@ -68,16 +68,16 @@ if [ -z "$DOCKER_IMAGE" ]; then
       bash ./_tests/run.sh &&:
 
     if [ $? -eq 0 ]; then
-      echo "${txtgreen}OK${txtreset}"
+      echo "${txtgreen}$platform OK${txtreset}"
     else
-      echo "${txtred}FAIL${txtreset}"
+      echo "${txtred}$platform FAIL${txtreset}"
       exit 1
     fi
   done
 
   echo "Removing tarminated containers..."
   docker rm `docker ps -a -q`
-  echo "Finished integration tests!"
+  echo "${txtgreen}Finished successfully all integration tests!${txtreset}"
 
 else
   # in a docker container.
