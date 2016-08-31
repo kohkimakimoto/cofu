@@ -18,7 +18,8 @@ import (
 	"strings"
 )
 
-func openLibs(L *lua.LState) {
+func (app *App)openLibs() {
+	L := app.LState
 	loadLResourceClass(L)
 	loadLCommandResultClass(L)
 
@@ -35,17 +36,6 @@ func openLibs(L *lua.LState) {
 	L.PreloadModule("env", gluaenv.Loader)
 	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
 	L.PreloadModule("re", gluare.Loader)
-
-	// for BC
-	L.PreloadModule("glua.json", gluajson.Loader)
-	L.PreloadModule("glua.fs", gluafs.Loader)
-	L.PreloadModule("glua.yaml", gluayaml.Loader)
-	L.PreloadModule("glua.template", gluatemplate.Loader)
-	L.PreloadModule("glua.question", gluaquestion.Loader)
-	L.PreloadModule("glua.env", gluaenv.Loader)
-	L.PreloadModule("glua.http", gluahttp.NewHttpModule(&http.Client{}).Loader)
-	L.PreloadModule("glua.re", gluare.Loader)
-
 }
 
 const lCommandResultClass = "CommandResult*"
