@@ -18,11 +18,17 @@ import (
 	"strings"
 )
 
-func (app *App)openLibs() {
+func openLibs(app *App) {
 	L := app.LState
+
 	loadLResourceClass(L)
 	loadLCommandResultClass(L)
 
+	// load core module and resources
+	L.PreloadModule("cofu", cofuLuaModuleLoader(app))
+	for _, resourceType := range app.ResourceTypes {
+		L.SetGlobal(resourceType.Name, L.NewFunction(resourceType.LGFunction()))
+	}
 	L.SetGlobal("run_command", L.NewFunction(fnRunCommand))
 	L.SetGlobal("include_recipe", L.NewFunction(fnIncludeRecipe))
 	L.SetGlobal("define", L.NewFunction(fnDefine))
@@ -36,6 +42,25 @@ func (app *App)openLibs() {
 	L.PreloadModule("env", gluaenv.Loader)
 	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
 	L.PreloadModule("re", gluare.Loader)
+}
+
+func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
+	return func(L *lua.LState) int {
+		tb := L.NewTable()
+		for _, resourceType := range app.ResourceTypes {
+			tb.RawSetString(resourceType.Name, L.NewFunction(resourceType.LGFunction()))
+		}
+
+		L.SetFuncs(tb, map[string]lua.LGFunction{
+			"run_command":    fnRunCommand,
+			"include_recipe": fnIncludeRecipe,
+			"define":         fnDefine,
+		})
+
+		L.Push(tb)
+
+		return 1
+	}
 }
 
 const lCommandResultClass = "CommandResult*"

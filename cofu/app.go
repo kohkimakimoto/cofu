@@ -78,7 +78,7 @@ func (app *App) Init() error {
 	}
 
 	// load lua libraries.
-	app.openLibs()
+	openLibs(app)
 
 	// create tmp directory
 	if _, err := os.Stat(app.Tmpdir); os.IsNotExist(err) {
@@ -109,10 +109,6 @@ func (app *App) loadResourceType(resourceType *ResourceType) {
 	resourceType.Actions["nothing"] = func(r *Resource) error {
 		return nil
 	}
-
-	// set lua api
-	L := app.LState
-	L.SetGlobal(resourceType.Name, L.NewFunction(resourceType.LGFunction()))
 }
 
 func (app *App) LoadDefinition(definition *Definition) {
