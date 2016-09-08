@@ -37,22 +37,6 @@ func (resourceType *ResourceType) LGFunction() func(L *lua.LState) int {
 			return 1
 		}
 
-		//// procedural style
-		//if L.GetTop() == 2 {
-		//	tb := L.CheckTable(2)
-		//	resourceType.registerResource(L, name, tb)
-		//
-		//	return 0
-		//}
-		//
-		//// DSL style
-		//L.Push(L.NewFunction(func(L *lua.LState) int {
-		//	tb := L.CheckTable(1)
-		//	resourceType.registerResource(L, name, tb)
-		//
-		//	return 0
-		//}))
-
 		return 1
 	}
 }

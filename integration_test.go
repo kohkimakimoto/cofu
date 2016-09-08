@@ -53,20 +53,7 @@ func testRecipeFile(t *testing.T, recipeFile string) {
 	app := cofu.NewApp()
 	defer app.Close()
 
-	app.ResourceTypes = []*cofu.ResourceType{
-		resource.Directory,
-		resource.Execute,
-		resource.File,
-		resource.Git,
-		resource.Group,
-		resource.Link,
-		resource.LuaFunction,
-		resource.SoftwarePackage,
-		resource.Service,
-		resource.RemoteFile,
-		resource.Template,
-		resource.User,
-	}
+	app.ResourceTypes = resource.ResourceTypes
 	if err := app.Init(); err != nil {
 		t.Error(err)
 	}
