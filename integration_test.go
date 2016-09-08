@@ -1,11 +1,11 @@
 package cofu
 
 import (
-	"testing"
-	"os"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/resource"
+	"os"
 	"path/filepath"
+	"testing"
 )
 
 var testRecipeFiles []string = []string{
@@ -49,7 +49,7 @@ func testRecipeFile(t *testing.T, recipeFile string) {
 		return
 	}
 
-	t.Logf("testing %s\n",recipeFile)
+	t.Logf("testing %s\n", recipeFile)
 
 	app := cofu.NewApp()
 	defer app.Close()
