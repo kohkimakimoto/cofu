@@ -5,7 +5,7 @@ Thumbs.db
 *.iml
 /vendor
 .vagrant
-
+/_tests/cache/*
 /_work
 
 /_build/dev/*

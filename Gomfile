@@ -11,6 +11,7 @@ gom "github.com/cjoudrey/gluahttp"
 gom "github.com/otm/gluash"
 
 # misc
+gom "github.com/mitchellh/mapstructure"
 gom "github.com/kohkimakimoto/loglv"
 gom "github.com/fatih/color"
 gom "github.com/yookoala/realpath"

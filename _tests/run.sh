@@ -1,20 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-indent() {
-    local n="${1:-4}"
-    local p=""
-    for i in `seq 1 $n`; do
-        p="$p "
-    done;
-
-    local c="s/^/$p/"
-    case $(uname) in
-      Darwin) sed -l "$c";; # mac/bsd sed: -l buffers on line boundaries
-      *)      sed -u "$c";; # unix/gnu sed: -u unbuffered (arbitrary) chunks of data
-    esac
-}
-
 if [ "${TERM:-dumb}" != "dumb" ]; then
     txtunderline=$(tput sgr 0 1)     # Underline
     txtbold=$(tput bold)             # Bold
@@ -32,6 +18,8 @@ else
     txtblue=$""
     txtreset=""
 fi
+
+go_version="1.7"
 
 if [ -z "$DOCKER_IMAGE" ]; then
   # no docker
@@ -53,17 +41,20 @@ if [ -z "$DOCKER_IMAGE" ]; then
   repo_dir=$(cd $(dirname $0)/..; pwd)
   cd $repo_dir
 
-  # Create dist binaries for testing.
-  make dist
-  unzip -d ./_build/dist ./_build/dist/cofu_linux_amd64.zip
-  trap "rm -f ./_build/dist/cofu" 0
+  go_archive="$repo_dir/_tests/cache/go${go_version}.linux-amd64.tar.gz"
+  if [ ! -e "$go_archive" ]; then
+    echo "downloading go linux archive..."
+    cd $(dirname $go_archive)
+    curl -O -L https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz
+    cd -
+  fi
 
   for platform in 'centos:centos5' 'centos:centos6' 'centos:centos7' 'debian:7' 'debian:8' 'ubuntu:12.04' 'ubuntu:14.04' 'ubuntu:16.04'; do
     docker run \
       --privileged  \
       --env DOCKER_IMAGE=${platform}  \
-      -v $repo_dir:/tmp/cofu \
-      -w /tmp/cofu \
+      -v $repo_dir:/tmp/dev/src/github.com/kohkimakimoto/cofu \
+      -w /tmp/dev/src/github.com/kohkimakimoto/cofu \
       ${platform} \
       bash ./_tests/run.sh &&:
 
@@ -80,40 +71,32 @@ if [ -z "$DOCKER_IMAGE" ]; then
   echo "${txtgreen}Finished successfully all integration tests!${txtreset}"
 
 else
-  # in a docker container.
   echo "Running tests on '$DOCKER_IMAGE'..."
 
+  # in a docker container.
   repo_dir=$(cd $(dirname $0)/..; pwd)
   cd $repo_dir
 
+  # https://golang.org/doc/install
+  cd _tests/cache
+  tar -C /usr/local -xzf go1.7.linux-amd64.tar.gz
+  export PATH=$PATH:/usr/local/go/bin
+  export GOPATH=/tmp/dev
+  export RUN_INTEGRATION_TEST=1
+  cd -
+
+  go version
+
+  go test -cover -v $(go list ./... | grep -v vendor)
+
   # copy cofu binary to the /usr/local/bin/cofu
-  cp -p ${repo_dir}/_build/dist/cofu /usr/local/bin/cofu
+  # cp -p ${repo_dir}/_build/dist/cofu /usr/local/bin/cofu
 
-  # show cofu version.
-  cofu -v
-
-  cd _tests
-  cofu ./test_resource_directory/recipe.lua
-  cofu ./test_resource_execute/recipe.lua
-  cofu ./test_resource_template/recipe.lua
-
+  # # show cofu version.
+  # cofu -v
+  #
+  # cd _tests
+  # cofu ./test_resource_directory/recipe.lua
+  # cofu ./test_resource_execute/recipe.lua
+  # cofu ./test_resource_template/recipe.lua
 fi
-
-
-
-
-# prj_dir=$(cd $(dirname $0)/..; pwd)
-# cd $prj_dir
-#
-# user=`whoami`
-# if [ $user != "root" ]; then
-#     echo "you need to run it on the 'root' user." 1>&2
-#     exit 1
-# fi
-#
-# . /etc/profile
-# . .envrc
-#
-# export COFU_INTEGRATION_TEST=1
-#
-# go test . -v -cover
