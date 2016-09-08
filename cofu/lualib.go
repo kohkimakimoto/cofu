@@ -26,6 +26,7 @@ func openLibs(app *App) {
 
 	// load core module and resources
 	L.PreloadModule("cofu", cofuLuaModuleLoader(app))
+
 	for _, resourceType := range app.ResourceTypes {
 		L.SetGlobal(resourceType.Name, L.NewFunction(resourceType.LGFunction()))
 	}
@@ -57,10 +58,36 @@ func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
 			"define":         fnDefine,
 		})
 
+		mt := L.NewTable()
+		L.SetField(mt, "__index", L.NewFunction(cofuIndex))
+		// L.SetField(mt, "__newindex", L.NewFunction(cofuNewIndex))
+		L.SetMetatable(tb, mt)
+
 		L.Push(tb)
 
 		return 1
 	}
+}
+
+func cofuIndex(L *lua.LState) int {
+	// cofuModule := L.CheckTable(1)
+	index := L.CheckString(2)
+	app := GetApp(L)
+
+	var v lua.LValue
+	switch index {
+	case "os_family":
+		v = lua.LString(app.Infra.Command().OSFamily())
+	case "os_release":
+		v = lua.LString(app.Infra.Command().OSRelease())
+	case "os_info":
+		v = lua.LString(app.Infra.Command().OSInfo())
+	default:
+		v = lua.LNil
+	}
+
+	L.Push(v)
+	return 1
 }
 
 const lCommandResultClass = "CommandResult*"

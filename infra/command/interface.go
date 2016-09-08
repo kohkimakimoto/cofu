@@ -12,6 +12,7 @@ type CommandFactory interface {
 	SetOSRelease(string)
 	OSFamily() string
 	OSRelease() string
+	OSInfo() string
 	DefaultServiceProvider() string
 
 	// file

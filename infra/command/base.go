@@ -26,6 +26,10 @@ func (c *BaseCommand) OSRelease() string {
 	return c.osRelease
 }
 
+func (c *BaseCommand) OSInfo() string {
+	return c.osFamily + c.osRelease
+}
+
 func (c *BaseCommand) String() string {
 	return "BaseCommand"
 }
