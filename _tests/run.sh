@@ -87,16 +87,7 @@ else
 
   go version
 
-  go test -cover -v $(go list ./... | grep -v vendor)
-
-  # copy cofu binary to the /usr/local/bin/cofu
-  # cp -p ${repo_dir}/_build/dist/cofu /usr/local/bin/cofu
-
-  # # show cofu version.
-  # cofu -v
-  #
-  # cd _tests
-  # cofu ./test_resource_directory/recipe.lua
-  # cofu ./test_resource_execute/recipe.lua
-  # cofu ./test_resource_template/recipe.lua
+  # now runs only integration test.
+  go test -v .
+  # go test -v $(go list ./... | grep -v vendor)
 fi
