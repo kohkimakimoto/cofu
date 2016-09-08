@@ -78,7 +78,7 @@ func (app *App) Init() error {
 	}
 
 	// load lua libraries.
-	app.openLibs()
+	openLibs(app.LState)
 
 	// create tmp directory
 	if _, err := os.Stat(app.Tmpdir); os.IsNotExist(err) {

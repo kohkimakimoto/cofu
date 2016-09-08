@@ -12,6 +12,7 @@ var testRecipeFiles []string = []string{
 	"_tests/resource_directory.lua",
 	"_tests/resource_execute.lua",
 	"_tests/resource_template.lua",
+	"_tests/run_command.lua",
 }
 
 var wd string

@@ -18,8 +18,7 @@ import (
 	"strings"
 )
 
-func (app *App)openLibs() {
-	L := app.LState
+func openLibs(L *lua.LState) {
 	loadLResourceClass(L)
 	loadLCommandResultClass(L)
 

@@ -29,14 +29,14 @@ var Execute = &cofu.ResourceType{
 
 func executePreAction(r *cofu.Resource) error {
 	if r.CurrentAction == "run" {
-		r.CurrentAttributes["executed"] = true
+		r.Attributes["executed"] = true
 	}
 
 	return nil
 }
 
 func executeSetCurrentAttributes(r *cofu.Resource) error {
-	r.Attributes["executed"] = false
+	r.CurrentAttributes["executed"] = false
 
 	return nil
 }
