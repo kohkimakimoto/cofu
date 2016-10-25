@@ -31,7 +31,7 @@ fi
 
 source ./_build/config
 
-PRODUCT_VERSION="dev-${PRODUCT_VERSION}"
+COMMIT_HASH=`git log --pretty=format:%H -n 1`
 
 echo "--> Building dev binary..."
 echo "    PRODUCT_NAME: $PRODUCT_NAME"
