@@ -1,6 +1,7 @@
 ## v0.3.0
 
-WIP...
+* fix bug: #13
+* Use travis-ci for testing.
 
 ## v0.2.0
 
