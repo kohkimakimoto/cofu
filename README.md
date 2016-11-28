@@ -1,4 +1,4 @@
-# Cofu
+# Cofu [![Build Status](https://travis-ci.org/kohkimakimoto/cofu.svg?branch=master)](https://travis-ci.org/kohkimakimoto/cofu)
 
 Minimum configuration management tool written in Go.
 
