@@ -1,0 +1,21 @@
+services:
+    - docker
+
+language: go
+
+go:
+  - 1.7
+
+branches:
+  only:
+    - master
+
+before_install:
+  - go get github.com/mattn/gom
+  - make deps
+
+script:
+  # check building a binary
+  - make
+  # run tests
+  - make testv

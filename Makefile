@@ -18,16 +18,21 @@ fmt:
 	go fmt $$(go list ./... | grep -v vendor)
 
 test:
-	go test -cover $$(go list ./... | grep -v vendor)
+	@export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
+	@export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
 
 testv:
-	go test -cover -v $$(go list ./... | grep -v vendor)
+	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
+	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
 
-test_integration:
-	@bash $(CURDIR)/_tests/run.sh
+testone:
+	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
 
 deps:
 	gom install
 
 deps_update:
 	rm Gomfile.lock; rm -rf vendor; gom install && gom lock
+
+website:
+	cd website && make deps && make

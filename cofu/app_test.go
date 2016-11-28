@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+func TestAppJustRun(t *testing.T) {
+	app := NewApp()
+	defer app.Close()
+
+	if err := app.Init(); err != nil {
+		t.Error(err)
+	}
+
+	if err := app.Run(); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestSendContentToTempfile(t *testing.T) {
 	b := []byte(`hogehogehoge`)
 

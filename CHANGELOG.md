@@ -1,3 +1,7 @@
+## v0.3.0
+
+WIP...
+
 ## v0.2.0
 
 * Support Another configuration syntax (plain lua code not DSL style).

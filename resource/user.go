@@ -131,12 +131,17 @@ func userCreateAction(r *cofu.Resource) error {
 			create_home = "true"
 		}
 
+		uidString := ""
+		if uid != nil && !uid.Nil() {
+			uidString = uid.String()
+		}
+
 		options := map[string]string{
 			"gid":            gid,
 			"home_directory": home,
 			"password":       password,
 			"system_user":    system_user,
-			"uid":            uid.String(),
+			"uid":            uidString,
 			"shell":          shell,
 			"create_home":    create_home,
 		}
