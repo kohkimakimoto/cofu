@@ -26,7 +26,7 @@ testv:
 	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
 
 testone:
-	@export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
+	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
 
 deps:
 	gom install
