@@ -18,16 +18,16 @@ fmt:
 	go fmt $$(go list ./... | grep -v vendor)
 
 test:
-	go test -cover $$(go list ./... | grep -v vendor)
+	@bash -c $(CURDIR)/test/test.sh
 
 testv:
-	go test -cover -v $$(go list ./... | grep -v vendor)
-
-test_integration:
-	@bash $(CURDIR)/_tests/run.sh
+	@export GOTEST_FLAGS="-cover -timeout=360s -v" && bash -c $(CURDIR)/test/test.sh
 
 deps:
 	gom install
 
 deps_update:
 	rm Gomfile.lock; rm -rf vendor; gom install && gom lock
+
+website:
+	cd website && make deps && make
