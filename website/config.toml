@@ -1,0 +1,6 @@
+# http://gohugo.io/overview/configuration/
+baseurl =  "/"
+title = "Cofu - Minimum configuration management tool written in Go."
+uglyURLs = true
+disableHugoGeneratorInject = true
+disableRSS = true

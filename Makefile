@@ -1,4 +1,4 @@
-.PHONY: default dev dist packaging packaging_destroy fmt test testv deps deps_update
+.PHONY: default dev dist packaging packaging_destroy fmt test testv deps deps_update website
 
 default: dev
 
