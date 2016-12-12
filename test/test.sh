@@ -54,10 +54,6 @@ echo "--> Running tests (docker image: $DOCKER_IMAGE) (flags: $GOTEST_FLAGS)..."
 container_name_part=$(echo $DOCKER_IMAGE | perl -pe "s/[:\/]/-/g;")
 DOCKER_CONTAINER_NAME="$container_name_part-$(date +%s)"
 
-trap "echo '--> Terminating a container...' && \
-  docker rm $DOCKER_CONTAINER_NAME 2>&1 | prefix '    Deleted: ' && \
-  echo '--> Done.'" EXIT HUP INT QUIT TERM
-
 echo "--> Starting a docker container '$DOCKER_CONTAINER_NAME'.."
 echo "    Docker Image: ${txtbold}${txtyellow}$DOCKER_IMAGE${txtreset}"
 docker run \
@@ -66,6 +62,7 @@ docker run \
   --env GOTEST_FLAGS="${GOTEST_FLAGS}" \
   -v $repo_dir:/tmp/dev/src/github.com/kohkimakimoto/cofu \
   -w /tmp/dev/src/github.com/kohkimakimoto/cofu \
+  --rm \
   ${DOCKER_IMAGE} \
   bash ./test/run_test.sh 2>&1 | indent; status=${PIPESTATUS[0]}
 
