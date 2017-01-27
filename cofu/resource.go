@@ -537,6 +537,10 @@ func (r *Resource) SendFileToTempfile(file string) (string, error) {
 	return r.App.SendFileToTempfile(file)
 }
 
+func (r *Resource) SendDirectoryToTempDirectory(src string) (string, error) {
+	return r.App.SendDirectoryToTempDirectory(src)
+}
+
 func (r *Resource) IsDifferentFiles(from, to string) bool {
 	status := r.RunCommand("diff -q " + util.ShellEscape(from) + " " + util.ShellEscape(to)).ExitStatus
 	switch status {
@@ -550,8 +554,45 @@ func (r *Resource) IsDifferentFiles(from, to string) bool {
 	return false
 }
 
+func (r *Resource) IsDifferentFilesRecursively(from, to string) bool {
+	status := r.RunCommand("diff -r -q " + util.ShellEscape(from) + " " + util.ShellEscape(to)).ExitStatus
+	switch status {
+	case 1:
+		// diff found
+		return true
+	case 2:
+		panic("diff command exited with 2")
+	}
+
+	return false
+}
+
 func (r *Resource) ShowContentDiff(from, to string) {
 	diff := fmt.Sprintf("diff -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
+
+	if loglv.IsDebug() {
+		log.Printf("    (Debug) diff: %s", diff)
+	}
+
+	stdout := r.RunCommand(diff).Stdout
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "+") {
+			log.Printf(color.FgG("    %s", line))
+		} else if strings.HasPrefix(line, "-") {
+			log.Printf(color.FgR("    %s", line))
+		} else {
+			log.Printf("    %s", line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+}
+
+func (r *Resource) ShowContentDiffRecursively(from, to string) {
+	diff := fmt.Sprintf("diff -r -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
 
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) diff: %s", diff)

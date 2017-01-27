@@ -12,6 +12,8 @@ import (
 	"os"
 	"runtime"
 	"syscall"
+	"time"
+	"path/filepath"
 )
 
 type App struct {
@@ -120,7 +122,7 @@ func (app *App) LoadDefinition(definition *Definition) {
 func (app *App) Close() {
 	app.LState.Close()
 	for _, f := range app.Tmpfiles {
-		os.Remove(f)
+		os.RemoveAll(f)
 	}
 }
 
@@ -325,6 +327,24 @@ func (app *App) SendFileToTempfile(file string) (string, error) {
 
 	return app.SendContentToTempfile(content)
 }
+
+func (app *App) SendDirectoryToTempDirectory(src string) (string, error) {
+	tmpDir, err := ioutil.TempDir(app.Tmpdir, "")
+	if err != nil {
+		return "", err
+	}
+
+	tmpDir2 := filepath.Join(tmpDir, fmt.Sprintf("%d", time.Now().Unix()))
+
+	err = CopyDir(src, tmpDir2)
+	if err != nil {
+		return "", err
+	}
+
+	app.Tmpfiles = append(app.Tmpfiles, tmpDir)
+	return tmpDir2, nil
+}
+
 
 func GetApp(L *lua.LState) *App {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
