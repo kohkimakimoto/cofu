@@ -15,6 +15,7 @@ var ResourceTypes = []*cofu.ResourceType{
 	SoftwarePackage,
 	Service,
 	RemoteFile,
+	RemoteDirectory,
 	Template,
 	User,
 }

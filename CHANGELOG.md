@@ -1,3 +1,7 @@
+## v0.4.0
+
+* Support `remote_directory` resource: #16
+
 ## v0.3.0
 
 * fix bug: #13
