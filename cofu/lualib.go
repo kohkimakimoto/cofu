@@ -9,7 +9,7 @@ import (
 	"github.com/kohkimakimoto/gluatemplate"
 	"github.com/kohkimakimoto/gluayaml"
 	"github.com/kohkimakimoto/loglv"
-	gluajson "github.com/layeh/gopher-json"
+	gluajson "layeh.com/gopher-json"
 	"github.com/yuin/gluare"
 	"github.com/yuin/gopher-lua"
 	"log"
