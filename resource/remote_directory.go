@@ -129,15 +129,8 @@ func remoteDirectoryCreateAction(r *cofu.Resource) error {
 	owner := r.GetStringAttribute("owner")
 	group := r.GetStringAttribute("group")
 
-	modified := r.GetBoolAttribute("modified")
 	temppath := r.Values["temppath"]
-
-	var changeTarget string
-	if modified {
-		changeTarget = temppath.(string)
-	} else {
-		changeTarget = path
-	}
+	changeTarget := temppath.(string)
 
 	if mode != "" {
 		r.MustRunCommand(c.ChangeFileMode(changeTarget, mode, false))
