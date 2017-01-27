@@ -27,6 +27,7 @@ software_package "nginx" {
 * [group](resources_group.md)
 * [link](resources_link.md)
 * [lua_function](resources_lua_function.md)
+* [remote_file](resources_remote_directory.md)
 * [remote_file](resources_remote_file.md)
 * [service](resources_service.md)
 * [software_package](resources_software_package.md)
