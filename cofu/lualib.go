@@ -9,6 +9,7 @@ import (
 	"github.com/kohkimakimoto/gluatemplate"
 	"github.com/kohkimakimoto/gluayaml"
 	"github.com/kohkimakimoto/loglv"
+	"github.com/otm/gluash"
 	gluajson "layeh.com/gopher-json"
 	"github.com/yuin/gluare"
 	"github.com/yuin/gopher-lua"
@@ -43,6 +44,7 @@ func openLibs(app *App) {
 	L.PreloadModule("env", gluaenv.Loader)
 	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
 	L.PreloadModule("re", gluare.Loader)
+	L.PreloadModule("sh", gluash.Loader)
 }
 
 func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
