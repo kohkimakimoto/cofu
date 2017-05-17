@@ -3,12 +3,14 @@ Thumbs.db
 .tags*
 ._*
 *.iml
+.vscode/
+.buildsh/
 /vendor
 .vagrant
 /_old_tests/cache/*
 /_work
 
-/_build/dev/*
-/_build/dist/*
+build/dev/*
+build/dist/*
 
 !.gitkeep
