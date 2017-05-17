@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/yookoala/realpath"
 	"github.com/yuin/gopher-lua"
-	"path/filepath"
-	"os"
-	"io/ioutil"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 // This code inspired by https://github.com/yuin/gluamapper/blob/master/gluamapper.go

@@ -1,13 +1,11 @@
 package cofu
 
 import (
-	"testing"
-	"os"
-	"io/ioutil"
 	"github.com/kohkimakimoto/loglv"
+	"io/ioutil"
+	"os"
+	"testing"
 )
-
-
 
 var (
 	Content01 = `hogehoge`
@@ -36,7 +34,6 @@ func TestResource_ShowContentDiff_Normal(t *testing.T) {
 		tmpFile01.Close()
 		os.Remove(tmpFile01.Name())
 	}()
-
 
 	tmpFile02, err := createTempfileWithContent(Content03)
 	if err != nil {
@@ -72,7 +69,6 @@ func TestResource_ShowContentDiff_Long(t *testing.T) {
 		os.Remove(tmpFile01.Name())
 	}()
 
-
 	tmpFile02, err := createTempfileWithContent(Content02)
 	if err != nil {
 		t.Errorf("should not raise error: %v", err)
@@ -97,6 +93,3 @@ func createTempfileWithContent(c string) (*os.File, error) {
 
 	return tempFile, nil
 }
-
-
-

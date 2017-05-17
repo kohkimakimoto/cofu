@@ -9,11 +9,11 @@ import (
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
+	"io"
 	"log"
 	"os"
 	"sort"
 	"strings"
-	"io"
 )
 
 type Resource struct {
