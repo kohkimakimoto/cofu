@@ -9,6 +9,7 @@ import (
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
+	"io"
 	"log"
 	"os"
 	"sort"
@@ -31,6 +32,18 @@ type Resource struct {
 }
 
 func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
+	basepath, err := basepath(app.LState)
+	if err != nil {
+		wd, err2 := os.Getwd()
+		if err2 != nil {
+			panic(err2)
+		}
+		basepath = wd
+		if loglv.IsDebug() {
+			log.Printf("    (Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
+
+		}
+	}
 	return &Resource{
 		Name:              name,
 		Attributes:        map[string]interface{}{},
@@ -38,7 +51,7 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 		CurrentAttributes: map[string]interface{}{},
 		ResourceType:      resourceType,
 		App:               app,
-		Basepath:          basepath(app.LState),
+		Basepath:          basepath,
 		Values:            map[string]interface{}{},
 	}
 }
@@ -575,9 +588,18 @@ func (r *Resource) ShowContentDiff(from, to string) {
 	}
 
 	stdout := r.RunCommand(diff).Stdout
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
+	// I intentionally doesn't use bufio.Scanner to prevent bufio.Scanner: token too long
+	// see https://github.com/kohkimakimoto/cofu/issues/18
+	reader := bufio.NewReader(&stdout)
+	for {
+		linebytes, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		line := string(linebytes)
+
 		if strings.HasPrefix(line, "+") {
 			log.Printf(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
@@ -585,9 +607,6 @@ func (r *Resource) ShowContentDiff(from, to string) {
 		} else {
 			log.Printf("    %s", line)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
 	}
 }
 
@@ -599,9 +618,16 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 	}
 
 	stdout := r.RunCommand(diff).Stdout
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
+	reader := bufio.NewReader(&stdout)
+	for {
+		linebytes, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		line := string(linebytes)
+
 		if strings.HasPrefix(line, "+") {
 			log.Printf(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
@@ -609,9 +635,6 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 		} else {
 			log.Printf("    %s", line)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
 	}
 }
 

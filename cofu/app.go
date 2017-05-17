@@ -10,10 +10,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
-	"path/filepath"
 )
 
 type App struct {
@@ -344,7 +344,6 @@ func (app *App) SendDirectoryToTempDirectory(src string) (string, error) {
 	app.Tmpfiles = append(app.Tmpfiles, tmpDir)
 	return tmpDir2, nil
 }
-
 
 func GetApp(L *lua.LState) *App {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)

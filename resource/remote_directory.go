@@ -1,11 +1,10 @@
 package resource
 
-
 import (
+	"fmt"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"path/filepath"
 	"strings"
-	"fmt"
 )
 
 var RemoteDirectory = &cofu.ResourceType{
@@ -22,7 +21,7 @@ var RemoteDirectory = &cofu.ResourceType{
 			Required:    true,
 		},
 		&cofu.StringAttribute{
-			Name: "source",
+			Name:     "source",
 			Required: true,
 		},
 		&cofu.StringAttribute{
@@ -69,7 +68,6 @@ func remoteDirectoryPreAction(r *cofu.Resource) error {
 	} else {
 		r.Attributes["modified"] = false
 	}
-
 
 	switch r.CurrentAction {
 	case "create":
