@@ -40,8 +40,9 @@ But, to support running on multi platforms in future, Cofu is designed to execut
 
 Requirements
 
-* Go 1.7 or later (my development env)
-* [Gom](https://github.com/mattn/gom)
+* Go 1.8 or later (my development env)
+* [Glide](https://glide.sh/)
+* [gox](https://github.com/mitchellh/gox)
 
 Installing dependences
 
@@ -52,7 +53,7 @@ $ make deps
 Building dev binary.
 
 ```
-$ make
+$ make dev
 ```
 
 Building distributed binaries.
