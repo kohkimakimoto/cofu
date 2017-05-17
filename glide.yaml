@@ -1,0 +1,15 @@
+package: github.com/kohkimakimoto/cofu
+import:
+- package: github.com/cjoudrey/gluahttp
+- package: github.com/fatih/color
+- package: github.com/kohkimakimoto/gluaenv
+- package: github.com/kohkimakimoto/gluafs
+- package: github.com/kohkimakimoto/gluaquestion
+- package: github.com/kohkimakimoto/gluatemplate
+- package: github.com/kohkimakimoto/gluayaml
+- package: github.com/kohkimakimoto/loglv
+- package: github.com/mitchellh/mapstructure
+- package: github.com/yookoala/realpath
+- package: github.com/yuin/gluare
+- package: github.com/yuin/gopher-lua
+- package: layeh.com/gopher-json

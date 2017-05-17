@@ -1,0 +1,57 @@
+hash: 4d7f2cd31168acadc845655e14658d298fe1e0551afece0e2312934dd253bdef
+updated: 2017-05-17T12:01:57.690383528+09:00
+imports:
+- name: github.com/cjoudrey/gluahttp
+  version: b4bfe0c50fea948dcbf3966e120996d6607bbd89
+- name: github.com/fatih/color
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
+- name: github.com/howeyc/gopass
+  version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
+- name: github.com/kohkimakimoto/gluaenv
+  version: 2888db6bbe38923d59c42e443895875cc8ce0820
+- name: github.com/kohkimakimoto/gluafs
+  version: 01391ed2d7ab89dc80157605b073403f960aa223
+- name: github.com/kohkimakimoto/gluaquestion
+  version: 311437c29ba54d027ad2af383661725ae2bfdcdc
+- name: github.com/kohkimakimoto/gluatemplate
+  version: d9e2c9d6b00f069a9da377a9ac529c827c1c7d71
+- name: github.com/kohkimakimoto/gluayaml
+  version: 6fe413d49d73d785510ecf1529991ab0573e96c7
+- name: github.com/kohkimakimoto/loglv
+  version: 4f44f49b070c120dfd2c9e41a7d07c2eb7817a04
+- name: github.com/mattn/go-colorable
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
+- name: github.com/mitchellh/mapstructure
+  version: cc8532a8e9a55ea36402aa21efdf403a60d34096
+- name: github.com/yookoala/realpath
+  version: c416d99ab5ed256fa30c1f3bab73152deb59bb69
+- name: github.com/yuin/gluare
+  version: 8e2742cd1bf2b904720ac66eca3c2091b2ea0720
+- name: github.com/yuin/gopher-lua
+  version: b402f3114ec730d8bddb074a6c137309f561aa78
+  subpackages:
+  - ast
+  - parse
+  - pm
+- name: golang.org/x/crypto
+  version: 0fe963104e9d1877082f8fb38f816fcd97eb1d10
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/net
+  version: 34057069f4ab13dc4433c68d368737ebeafcccdc
+  subpackages:
+  - context
+- name: golang.org/x/sys
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
+- name: layeh.com/gopher-json
+  version: c128cc74278be889c4381681712931976fe0d88b
+testImports: []
