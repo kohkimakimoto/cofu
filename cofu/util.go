@@ -71,13 +71,13 @@ func currentDir(L *lua.LState) string {
 	return filepath.Dir(dbg.Source)
 }
 
-func basepath(L *lua.LState) string {
+func basepath(L *lua.LState) (string, error) {
 	p, err := realpath.Realpath(currentDir(L))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return p
+	return p, nil
 }
 
 func CopyFile(src, dst string) (err error) {

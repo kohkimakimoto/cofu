@@ -31,6 +31,18 @@ type Resource struct {
 }
 
 func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
+	basepath, err := basepath(app.LState)
+	if err != nil {
+		wd, err2 := os.Getwd()
+		if err2 != nil {
+			panic(err2)
+		}
+		basepath = wd
+		if loglv.IsDebug() {
+			log.Printf("    (Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
+
+		}
+	}
 	return &Resource{
 		Name:              name,
 		Attributes:        map[string]interface{}{},
@@ -38,7 +50,7 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 		CurrentAttributes: map[string]interface{}{},
 		ResourceType:      resourceType,
 		App:               app,
-		Basepath:          basepath(app.LState),
+		Basepath:          basepath,
 		Values:            map[string]interface{}{},
 	}
 }
