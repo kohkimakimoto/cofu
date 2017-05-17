@@ -4,18 +4,13 @@ services:
 language: go
 
 go:
-  - 1.7
-
-branches:
-  only:
-    - master
+  - 1.8
 
 before_install:
-  - go get github.com/mattn/gom
-  - make deps
+  - go get github.com/kohkimakimoto/buildsh
+  - go get github.com/Masterminds/glide
 
 script:
-  # check building a binary
-  - make
-  # run tests
-  - make testv
+  - make deps
+  - make test
+

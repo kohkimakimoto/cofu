@@ -1,4 +1,4 @@
-.PHONY:help dev dist packaging fmt test testv deps
+.PHONY:help dev dist packaging fmt test deps
 .DEFAULT_GOAL := help
 
 # This is a magic code to output help message at default
@@ -21,20 +21,10 @@ clean: ## Clean the built binaries.
 fmt:
 	go fmt $$(go list ./... | grep -v vendor)
 
-test:
+test: ## Run all tests
 	@export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
 	@export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
 	@export DOCKER_IMAGE="kohkimakimoto/golang:debian8" && bash -c $(CURDIR)/test/test.sh
-	@export DOCKER_IMAGE="kohkimakimoto/golang:debian7" && bash -c $(CURDIR)/test/test.sh
-
-testv:
-	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
-	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
-	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:debian8" && bash -c $(CURDIR)/test/test.sh
-	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:debian7" && bash -c $(CURDIR)/test/test.sh
-
-testone:
-	@export GOTEST_FLAGS="-cover -timeout=360s -v" && export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
 
 deps: ## Install dependences by using glide
 	glide install
