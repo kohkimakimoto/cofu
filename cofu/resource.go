@@ -13,6 +13,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"io"
 )
 
 type Resource struct {
@@ -587,9 +588,18 @@ func (r *Resource) ShowContentDiff(from, to string) {
 	}
 
 	stdout := r.RunCommand(diff).Stdout
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
+	// I intentionally doesn't use bufio.Scanner to prevent bufio.Scanner: token too long
+	// see https://github.com/kohkimakimoto/cofu/issues/18
+	reader := bufio.NewReader(&stdout)
+	for {
+		linebytes, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		line := string(linebytes)
+
 		if strings.HasPrefix(line, "+") {
 			log.Printf(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
@@ -597,9 +607,6 @@ func (r *Resource) ShowContentDiff(from, to string) {
 		} else {
 			log.Printf("    %s", line)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
 	}
 }
 
@@ -611,9 +618,16 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 	}
 
 	stdout := r.RunCommand(diff).Stdout
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
+	reader := bufio.NewReader(&stdout)
+	for {
+		linebytes, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		line := string(linebytes)
+
 		if strings.HasPrefix(line, "+") {
 			log.Printf(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
@@ -621,9 +635,6 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 		} else {
 			log.Printf("    %s", line)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
 	}
 }
 
