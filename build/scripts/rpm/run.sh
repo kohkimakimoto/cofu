@@ -11,9 +11,9 @@ echo "Copying files..."
 repo_dir=$(pwd)
 platform=el${RHEL_VERSION}
 
-cp -pr build/packaging/rpm/SPECS $HOME/rpmbuild/
-cp -pr build/packaging/rpm/SOURCES $HOME/rpmbuild/
-cp -pr build/dist/${PRODUCT_NAME}_linux_amd64.zip $HOME/rpmbuild/SOURCES/${PRODUCT_NAME}_linux_amd64.zip
+cp -pr build/scripts/rpm/SPECS $HOME/rpmbuild/
+cp -pr build/scripts/rpm/SOURCES $HOME/rpmbuild/
+cp -pr build/outputs/dist/${PRODUCT_NAME}_linux_amd64.zip $HOME/rpmbuild/SOURCES/${PRODUCT_NAME}_linux_amd64.zip
 
 echo "Building RPM..."
 cd $HOME
@@ -26,6 +26,6 @@ rpmbuild \
 echo "Copying generated files to shared folder..."
 cd $repo_dir
 
-mkdir -p build/dist/${platform}
-cp -pr $HOME/rpmbuild/RPMS build/dist/${platform}
-cp -pr $HOME/rpmbuild/SRPMS build/dist/${platform}
+mkdir -p build/outputs/packaging/${platform}
+cp -pr $HOME/rpmbuild/RPMS build/outputs/packaging/${platform}
+cp -pr $HOME/rpmbuild/SRPMS build/outputs/packaging/${platform}

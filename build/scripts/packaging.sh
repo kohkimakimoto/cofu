@@ -4,23 +4,21 @@ set -eu
 # Get the directory path.
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-build_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
-repo_dir="$(cd $build_dir/.. && pwd)"
+scripts_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
+outputs_dir="$(cd $scripts_dir/../outputs && pwd)"
+repo_dir="$(cd $scripts_dir/../.. && pwd)"
 
 # Move the parent (repository) directory
 cd "$repo_dir"
 
-# Check if it has loaded .envrc by direnv.
-if [ -z ${DIRENV_DIR+x} ]; then
-    if [ -e "./.envrc" ]; then
-        source ./.envrc
-    fi
-fi
+# Load config
+source $scripts_dir/config
 
-source $build_dir/config
+echo "Removing old files."
+rm -rf $outputs_dir/packaging/*
 
 echo "Building RPM packages..."
-cd $build_dir/packaging/rpm
+cd $scripts_dir/rpm
 for image in 'kohkimakimoto/rpmbuild:el5' 'kohkimakimoto/rpmbuild:el6' 'kohkimakimoto/rpmbuild:el7'; do
     docker run \
         --env DOCKER_IMAGE=${image}  \
@@ -31,10 +29,10 @@ for image in 'kohkimakimoto/rpmbuild:el5' 'kohkimakimoto/rpmbuild:el6' 'kohkimak
         -w /tmp/repo \
         --rm \
         ${image} \
-        bash ./build/packaging/rpm/run.sh
+        bash ./build/scripts/rpm/run.sh
 done
 
 cd "$repo_dir"
 
 echo "Results:"
-ls -hl "$build_dir/dist"
+ls -hl "$outputs_dir/packaging"

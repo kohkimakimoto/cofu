@@ -7,10 +7,8 @@ Thumbs.db
 .buildsh/
 /vendor
 .vagrant
-/_old_tests/cache/*
 /_work
 
-build/dev/*
-build/dist/*
+build/outputs/*
 
 !.gitkeep

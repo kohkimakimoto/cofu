@@ -4,20 +4,18 @@ set -eu
 # Get the directory path.
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-build_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
-repo_dir="$(cd $build_dir/.. && pwd)"
+scripts_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
+outputs_dir="$(cd $scripts_dir/../outputs && pwd)"
+repo_dir="$(cd $scripts_dir/../.. && pwd)"
 
 # Move the parent (repository) directory
 cd "$repo_dir"
 
-# Check if it has loaded .envrc by direnv.
-if [ -z ${DIRENV_DIR+x} ]; then
-    if [ -e "./.envrc" ]; then
-        source ./.envrc
-    fi
-fi
+# Load config
+source $scripts_dir/config
 
-source $build_dir/config
+echo "Removing old files."
+rm -rf $outputs_dir/dev/*
 
 COMMIT_HASH=`git log --pretty=format:%H -n 1`
 
@@ -30,7 +28,7 @@ go build \
     -ldflags=" -w \
         -X github.com/kohkimakimoto/$PRODUCT_NAME/$PRODUCT_NAME.CommitHash=$COMMIT_HASH \
         -X github.com/kohkimakimoto/$PRODUCT_NAME/$PRODUCT_NAME.Version=$PRODUCT_VERSION" \
-    -o="$build_dir/dev/$PRODUCT_NAME" \
+    -o="$outputs_dir/dev/$PRODUCT_NAME" \
     ./cmd/${PRODUCT_NAME}
 echo "Results:"
-ls -hl "$build_dir/dev"
+ls -hl "$outputs_dir/dev"

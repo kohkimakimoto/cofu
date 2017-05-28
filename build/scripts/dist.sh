@@ -4,23 +4,18 @@ set -eu
 # Get the directory path.
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-build_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
-repo_dir="$(cd $build_dir/.. && pwd)"
+scripts_dir="$( cd -P "$( dirname "$SOURCE" )/" && pwd )"
+outputs_dir="$(cd $scripts_dir/../outputs && pwd)"
+repo_dir="$(cd $scripts_dir/../.. && pwd)"
 
 # Move the parent (repository) directory
 cd "$repo_dir"
 
-# Check if it has loaded .envrc by direnv.
-if [ -z ${DIRENV_DIR+x} ]; then
-    if [ -e "./.envrc" ]; then
-        source ./.envrc
-    fi
-fi
-
-source $build_dir/config
+# Load config
+source $scripts_dir/config
 
 echo "Removing old files."
-rm -rf $build_dir/dist/*
+rm -rf $outputs_dir/dist/*
 
 COMMIT_HASH=`git log --pretty=format:%H -n 1`
 
@@ -35,12 +30,12 @@ gox \
     -ldflags=" -w \
         -X github.com/kohkimakimoto/$PRODUCT_NAME/$PRODUCT_NAME.CommitHash=$COMMIT_HASH \
         -X github.com/kohkimakimoto/$PRODUCT_NAME/$PRODUCT_NAME.Version=$PRODUCT_VERSION" \
-    -output "$build_dir/dist/${PRODUCT_NAME}_{{.OS}}_{{.Arch}}" \
+    -output "$outputs_dir/dist/${PRODUCT_NAME}_{{.OS}}_{{.Arch}}" \
     ./cmd/${PRODUCT_NAME}
 
 echo "Packaging to zip archives..."
 
-cd "$build_dir/dist"
+cd "$outputs_dir/dist"
 echo "Packaging darwin binaries" | indent
 mv ${PRODUCT_NAME}_darwin_amd64 ${PRODUCT_NAME} && zip ${PRODUCT_NAME}_darwin_amd64.zip ${PRODUCT_NAME}  | indent && rm ${PRODUCT_NAME}
 echo "Packaging linux binaries" | indent
@@ -51,5 +46,5 @@ mv ${PRODUCT_NAME}_linux_amd64 ${PRODUCT_NAME} && zip ${PRODUCT_NAME}_linux_amd6
 cd "$repo_dir"
 
 echo "Results:"
-ls -hl "$build_dir/dist"
+ls -hl "$outputs_dir/dist"
 
