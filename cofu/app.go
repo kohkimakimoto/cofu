@@ -3,10 +3,6 @@ package cofu
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kohkimakimoto/cofu/infra"
-	"github.com/kohkimakimoto/cofu/support/color"
-	"github.com/kohkimakimoto/loglv"
-	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,6 +10,11 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/kohkimakimoto/cofu/infra"
+	"github.com/kohkimakimoto/cofu/support/color"
+	"github.com/kohkimakimoto/loglv"
+	"github.com/yuin/gopher-lua"
 )
 
 type App struct {
@@ -245,7 +246,7 @@ func (app *App) Run() error {
 		}
 	}
 
-	log.Printf("==> Starting " + Name + "...")
+	log.Print("==> Starting " + Name + "...")
 
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) Log level '%s'", loglv.LvString())
@@ -256,7 +257,7 @@ func (app *App) Run() error {
 	log.Printf("==> Loaded %d resources.", len(app.Resources))
 
 	if app.DryRun {
-		log.Printf(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
+		log.Print(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
 	}
 
 	for _, r := range app.Resources {

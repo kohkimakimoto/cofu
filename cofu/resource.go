@@ -3,17 +3,18 @@ package cofu
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"log"
+	"os"
+	"sort"
+	"strings"
+
 	"github.com/kohkimakimoto/cofu/infra"
 	"github.com/kohkimakimoto/cofu/infra/backend"
 	"github.com/kohkimakimoto/cofu/infra/util"
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
-	"io"
-	"log"
-	"os"
-	"sort"
-	"strings"
 )
 
 type Resource struct {
@@ -272,12 +273,12 @@ func (r *Resource) Run(specificAction string) error {
 	}
 
 	if r.doNotRunBecauseOfOnlyIf() {
-		log.Printf("    Execution skipped because of only_if attribute.")
+		log.Print("    Execution skipped because of only_if attribute.")
 		return nil
 	}
 
 	if r.doNotRunBecauseOfNotIf() {
-		log.Printf("    Execution skipped because of not_if attribute.")
+		log.Print("    Execution skipped because of not_if attribute.")
 		return nil
 	}
 
@@ -311,7 +312,7 @@ func (r *Resource) verify() error {
 		return nil
 	}
 
-	log.Printf("    Verifying...")
+	log.Print("    Verifying...")
 	for _, c := range commands {
 		ret := r.RunCommand(c)
 		if ret.Failure() {
@@ -601,9 +602,9 @@ func (r *Resource) ShowContentDiff(from, to string) {
 		line := string(linebytes)
 
 		if strings.HasPrefix(line, "+") {
-			log.Printf(color.FgG("    %s", line))
+			log.Print(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
-			log.Printf(color.FgR("    %s", line))
+			log.Print(color.FgR("    %s", line))
 		} else {
 			log.Printf("    %s", line)
 		}
@@ -629,9 +630,9 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 		line := string(linebytes)
 
 		if strings.HasPrefix(line, "+") {
-			log.Printf(color.FgG("    %s", line))
+			log.Print(color.FgG("    %s", line))
 		} else if strings.HasPrefix(line, "-") {
-			log.Printf(color.FgR("    %s", line))
+			log.Print(color.FgR("    %s", line))
 		} else {
 			log.Printf("    %s", line)
 		}
@@ -688,14 +689,14 @@ func DefaultShowDifferences(r *Resource) error {
 		if currentValue == nil || value == nil {
 			// ignore
 		} else if currentValue == nil && value != nil {
-			log.Printf(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
+			log.Print(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
 		} else if currentValue == value || value == nil {
 			// ignore. not change
 			if loglv.IsDebug() {
 				log.Printf("    (Debug) %s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
 			}
 		} else {
-			log.Printf(color.FgGB("    %s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
+			log.Print(color.FgGB("    %s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
 		}
 	}
 
