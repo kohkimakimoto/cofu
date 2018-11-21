@@ -35,6 +35,7 @@ test: ## Run all tests
 .PHONY:deps
 deps: ## Install dependences.
 	go get -u github.com/golang/dep/cmd/dep
+	go get -u github.com/mitchellh/gox
 	dep ensure
 
 .PHONY:resetdeps

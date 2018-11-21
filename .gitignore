@@ -10,5 +10,6 @@ Thumbs.db
 /_work
 
 build/outputs/*
+.go-packages/
 
 !.gitkeep
