@@ -16,6 +16,7 @@ var DefaultDetectors []Detector
 func init() {
 	DefaultDetectors = []Detector{
 		DetectRedhat,
+		DetectDebian,
 		DetectDarwin,
 		DetectUnknown,
 	}
