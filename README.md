@@ -2,8 +2,6 @@
 
 Minimum configuration management tool written in Go.
 
-This software is highly inspired by [itamae-kitchen/itamae](https://github.com/itamae-kitchen/itamae).
-
 ## Installation
 
 Cofu is provided as a single binary. You can download it and drop it in your $PATH.
@@ -60,39 +58,9 @@ If you're just getting started with Cofu, please start to read [Getting Started]
     * [run_command](docs/built-in-functions_run_command.md)
 * [Built-in Libraries](docs/built-in-libraries.md)
 
+## See Also
 
-
-## Developing Cofu
-
-Requirements
-
-* Go 1.11 or later (my development env)
-
-Installing dependences
-
-```
-$ make deps
-```
-
-Building dev binary.
-
-```
-$ make dev
-```
-
-Building distributed binaries.
-
-
-```
-$ make dist
-```
-
-Building packages (now support only RPM)
-
-```
-$ make dist
-$ make packaging
-```
+This software is highly inspired by [itamae-kitchen/itamae](https://github.com/itamae-kitchen/itamae).
 
 ## Author
 
