@@ -41,10 +41,10 @@ func realMain() (status int) {
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
 	flag.Usage = func() {
-		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE] [ARGMENTS...]
+		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE]
 
-  ` + cofu.Name + ` -- ` + cofu.Usage + `
-  version ` + cofu.Version + ` (` + cofu.CommitHash + `)
+` + cofu.Name + ` -- ` + cofu.Usage + `
+version ` + cofu.Version + ` (` + cofu.CommitHash + `)
 
 Options:
   -e 'command'               Execute 'command'
