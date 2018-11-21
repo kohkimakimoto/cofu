@@ -98,6 +98,17 @@
   version = "v1.1.2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:ed5a2784ba6c5b45c11fbc0652aefb98b0d64f63a6a448d1c91f81f1087cdf9e"
+  name = "github.com/tengattack/gluacrypto"
+  packages = [
+    ".",
+    "crypto",
+  ]
+  pruneopts = "UT"
+  revision = "b329f57d953061c57bc0174bdbd8f121f13a5dbc"
+
+[[projects]]
   digest = "1:d9fe1f86ae3cc0842ef73addb881c82067ca760bf002f7adde9a8c8e6ea54627"
   name = "github.com/yookoala/realpath"
   packages = ["."]
@@ -174,6 +185,7 @@
     "github.com/kohkimakimoto/gluayaml",
     "github.com/kohkimakimoto/loglv",
     "github.com/mitchellh/mapstructure",
+    "github.com/tengattack/gluacrypto",
     "github.com/yookoala/realpath",
     "github.com/yuin/gluare",
     "github.com/yuin/gopher-lua",

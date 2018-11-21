@@ -11,6 +11,7 @@ Cofu includes below lua libraries.
 * `http`: [cjoudrey/gluahttp](https://github.com/cjoudrey/gluahttp).
 * `re`: [yuin/gluare](https://github.com/yuin/gluare)
 * `sh`:[otm/gluash](https://github.com/otm/gluash)
+* `crypto`:[tengattack/gluacrypto](https://github.com/tengattack/gluacrypto)
 
 ## Example
 

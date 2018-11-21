@@ -9,6 +9,7 @@ import (
 	"github.com/kohkimakimoto/gluatemplate"
 	"github.com/kohkimakimoto/gluayaml"
 	"github.com/kohkimakimoto/loglv"
+	gluacrypto "github.com/tengattack/gluacrypto/crypto"
 	"github.com/yuin/gluare"
 	"github.com/yuin/gopher-lua"
 	gluajson "layeh.com/gopher-json"
@@ -32,9 +33,10 @@ func openLibs(app *App) {
 	}
 	L.SetGlobal("run_command", L.NewFunction(fnRunCommand))
 	L.SetGlobal("include_recipe", L.NewFunction(fnIncludeRecipe))
+	// define is deprecated now, but still be used fo BC.
 	L.SetGlobal("define", L.NewFunction(fnDefine))
 
-	// buit-in packages
+	// built-in packages
 	L.PreloadModule("json", gluajson.Loader)
 	L.PreloadModule("fs", gluafs.Loader)
 	L.PreloadModule("yaml", gluayaml.Loader)
@@ -43,6 +45,7 @@ func openLibs(app *App) {
 	L.PreloadModule("env", gluaenv.Loader)
 	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
 	L.PreloadModule("re", gluare.Loader)
+	L.PreloadModule("crypto", gluacrypto.Loader)
 }
 
 func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
