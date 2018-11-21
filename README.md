@@ -24,11 +24,7 @@ service "nginx" {
 $ sudo cofu recipe.lua
 ```
 
-Usage is covered in more detail in the [Documentation](./docs/README.md).
-
-## Documentation
-
-See [Documentation](./docs/README.md)
+Usage is covered in more detail in the [Documentation](#documentation).
 
 ## Supported Platforms
 
@@ -38,6 +34,33 @@ See [Documentation](./docs/README.md)
 * Debian9
 * Ubuntu16.04
 * Ubuntu18.04
+
+## Documentation
+
+If you're just getting started with Cofu, please start to read [Getting Started](docs/getting-started.md).
+
+* [Getting Started](docs/getting-started.md)
+* [Configuration](docs/configuration.md)
+* [Resources](docs/resources.md)
+    * [directory](docs/resources_directory.md)
+    * [execute](docs/resources_execute.md)
+    * [file](docs/resources_file.md)
+    * [group](docs/resources_group.md)
+    * [link](docs/resources_link.md)
+    * [lua_function](docs/resources_lua_function.md)
+    * [remote_directory](docs/resources_remote_directory.md)
+    * [remote_file](docs/resources_remote_file.md)
+    * [service](docs/resources_service.md)
+    * [software_package](docs/resources_software_package.md)
+    * [template](docs/resources_template.md)
+    * [user](docs/resources_user.md)
+* [Variables](docs/variables.md)
+* [Built-in Functions](docs/built-in-functions.md)
+    * [include_recipe](docs/built-in-functions_include_recipe.md)
+    * [run_command](docs/built-in-functions_run_command.md)
+* [Built-in Libraries](docs/built-in-libraries.md)
+
+
 
 ## Developing Cofu
 
