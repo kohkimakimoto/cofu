@@ -34,6 +34,8 @@ See [Documentation](./docs/README.md)
 
 * CentOS6
 * CentOS7
+* Debian8
+* Debian9
 * Ubuntu16.04
 * Ubuntu18.04
 

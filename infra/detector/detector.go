@@ -128,7 +128,9 @@ func DetectDebian(c *backend.Cmd) command.CommandFactory {
 		var ret command.CommandFactory
 		if family == "debian" {
 			intRelease, _ := strconv.ParseInt(release, 10, 64)
-			if intRelease >= 8 {
+			if intRelease >= 9 {
+				ret = &command.DebianV9Command{}
+			} else if intRelease >= 8 {
 				ret = &command.DebianV8Command{}
 			} else {
 				ret = &command.DebianV6Command{}
