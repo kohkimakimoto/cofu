@@ -30,11 +30,11 @@ Usage is covered in more detail in the [Documentation](./docs/README.md).
 
 See [Documentation](./docs/README.md)
 
-## Notable Limitation!
+## Supported Platforms
 
-I am testing Cofu on only el6 and el7 (CentOS6, CentOS7) in development. Therefore, Cofu does not officially support running on the other platforms.
-
-But, to support running on multi platforms in future, Cofu is designed to execute different code by each platforms. This code is inspired by [mizzy/specinfra](https://github.com/mizzy/specinfra). If you want Cofu to support other platforms, try to port [mizzy/specinfra](https://github.com/mizzy/specinfra) code to Go code: https://github.com/kohkimakimoto/cofu/tree/master/infra
+* CentOS6
+* CentOS7
+* Ubuntu18.04
 
 ## Developing Cofu
 
