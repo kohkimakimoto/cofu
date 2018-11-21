@@ -1,5 +1,7 @@
 # define
 
+***Deprecated***
+
 You can define ***definition*** with a collection of multiple resources, like:
 
 ```lua

@@ -2,7 +2,6 @@
 
 Cofu includes below lua libraries.
 
-
 * `json`: [layeh/gopher-json](https://github.com/layeh/gopher-json).
 * `fs`: [kohkimakimoto/gluafs](https://github.com/kohkimakimoto/gluafs).
 * `yaml`: [kohkimakimoto/gluayaml](https://github.com/kohkimakimoto/gluayaml).
