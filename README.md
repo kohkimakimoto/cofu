@@ -40,9 +40,7 @@ But, to support running on multi platforms in future, Cofu is designed to execut
 
 Requirements
 
-* Go 1.8 or later (my development env)
-* [Glide](https://glide.sh/)
-* [gox](https://github.com/mitchellh/gox)
+* Go 1.11 or later (my development env)
 
 Installing dependences
 
