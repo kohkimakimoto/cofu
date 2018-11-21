@@ -34,6 +34,7 @@ See [Documentation](./docs/README.md)
 
 * CentOS6
 * CentOS7
+* Ubuntu16.04
 * Ubuntu18.04
 
 ## Developing Cofu
