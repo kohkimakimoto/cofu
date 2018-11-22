@@ -250,7 +250,6 @@ func (app *App) Run() error {
 		log.Print("==> Starting " + Name + "...")
 	}
 
-
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) Log level '%s'", loglv.LvString())
 		log.Printf("    (Debug) os_family '%s'", app.Infra.Command().OSFamily())

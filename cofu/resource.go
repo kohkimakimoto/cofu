@@ -261,7 +261,6 @@ func (r *Resource) Run(specificAction string) error {
 		log.Print(color.FgBold(fmt.Sprintf("==> Evaluating %s", r.Desc())))
 	}
 
-
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) Resource basepath: %s", r.Basepath)
 	}
