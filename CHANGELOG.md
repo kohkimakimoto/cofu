@@ -1,3 +1,8 @@
+## v0.8.0
+
+* Support debian and ubuntu (experimental)
+* Deprecate `define` function
+
 ## v0.6.0
 
 * fix bug: #19
