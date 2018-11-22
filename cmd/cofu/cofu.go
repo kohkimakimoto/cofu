@@ -47,7 +47,7 @@ func realMain() (status int) {
 version ` + cofu.Version + ` (` + cofu.CommitHash + `)
 
 Options:
-  -e 'command'               Execute 'command'
+  -e 'recipe'               Execute 'recipe'
   -l, -log-level=LEVEL       Log level (quiet|error|warning|info|debug). Default is 'info'.
   -h, -help                  Show help
   -n, -dry-run               Runs dry-run mode

@@ -257,7 +257,10 @@ func (r *Resource) Run(specificAction string) error {
 		return nil
 	}
 
-	log.Print(color.FgBold(fmt.Sprintf("==> Evaluating %s", r.Desc())))
+	if loglv.IsInfo() {
+		log.Print(color.FgBold(fmt.Sprintf("==> Evaluating %s", r.Desc())))
+	}
+
 
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) Resource basepath: %s", r.Basepath)
@@ -273,12 +276,17 @@ func (r *Resource) Run(specificAction string) error {
 	}
 
 	if r.doNotRunBecauseOfOnlyIf() {
-		log.Print("    Execution skipped because of only_if attribute.")
+		if loglv.IsInfo() {
+			log.Print("    Execution skipped because of only_if attribute.")
+		}
+
 		return nil
 	}
 
 	if r.doNotRunBecauseOfNotIf() {
-		log.Print("    Execution skipped because of not_if attribute.")
+		if loglv.IsInfo() {
+			log.Print("    Execution skipped because of not_if attribute.")
+		}
 		return nil
 	}
 
@@ -312,7 +320,10 @@ func (r *Resource) verify() error {
 		return nil
 	}
 
-	log.Print("    Verifying...")
+	if loglv.IsInfo() {
+		log.Print("    Verifying...")
+	}
+
 	for _, c := range commands {
 		ret := r.RunCommand(c)
 		if ret.Failure() {
@@ -332,7 +343,9 @@ func (r *Resource) notify() error {
 			message = fmt.Sprintf("%s (immediately)", message)
 		}
 
-		log.Print(message)
+		if loglv.IsInfo() {
+			log.Print(message)
+		}
 
 		if n.Delayed() {
 			r.App.EnqueueDelayeNotification(n)
@@ -629,12 +642,14 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 		}
 		line := string(linebytes)
 
-		if strings.HasPrefix(line, "+") {
-			log.Print(color.FgG("    %s", line))
-		} else if strings.HasPrefix(line, "-") {
-			log.Print(color.FgR("    %s", line))
-		} else {
-			log.Printf("    %s", line)
+		if loglv.IsInfo() {
+			if strings.HasPrefix(line, "+") {
+				log.Print(color.FgG("    %s", line))
+			} else if strings.HasPrefix(line, "-") {
+				log.Print(color.FgR("    %s", line))
+			} else {
+				log.Printf("    %s", line)
+			}
 		}
 	}
 }
@@ -689,14 +704,18 @@ func DefaultShowDifferences(r *Resource) error {
 		if currentValue == nil || value == nil {
 			// ignore
 		} else if currentValue == nil && value != nil {
-			log.Print(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
+			if loglv.IsInfo() {
+				log.Print(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
+			}
 		} else if currentValue == value || value == nil {
 			// ignore. not change
 			if loglv.IsDebug() {
 				log.Printf("    (Debug) %s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
 			}
 		} else {
-			log.Print(color.FgGB("    %s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
+			if loglv.IsInfo() {
+				log.Print(color.FgGB("    %s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
+			}
 		}
 	}
 
