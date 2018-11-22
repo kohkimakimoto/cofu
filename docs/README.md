@@ -21,6 +21,5 @@ If you're just getting started with Cofu, please start to read [Getting Started]
 * [Variables](variables.md)
 * [Built-in Functions](built-in-functions.md)
     * [include_recipe](built-in-functions_include_recipe.md)
-    * [define](built-in-functions_define.md)
     * [run_command](built-in-functions_run_command.md)
 * [Built-in Libraries](built-in-libraries.md)

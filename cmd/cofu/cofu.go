@@ -41,13 +41,13 @@ func realMain() (status int) {
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
 	flag.Usage = func() {
-		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE] [ARGMENTS...]
+		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE]
 
-  ` + cofu.Name + ` -- ` + cofu.Usage + `
-  version ` + cofu.Version + ` (` + cofu.CommitHash + `)
+` + cofu.Name + ` -- ` + cofu.Usage + `
+version ` + cofu.Version + ` (` + cofu.CommitHash + `)
 
 Options:
-  -e 'command'               Execute 'command'
+  -e 'recipe'                Execute 'recipe'
   -l, -log-level=LEVEL       Log level (quiet|error|warning|info|debug). Default is 'info'.
   -h, -help                  Show help
   -n, -dry-run               Runs dry-run mode

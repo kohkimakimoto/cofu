@@ -14,13 +14,13 @@ After installing Cofu, run the `cofu` without any options in your terminal to ch
 
 ```
 $ cofu
-Usage: cofu [OPTIONS...] [RECIPE_FILE] [ARGMENTS...]
+Usage: cofu [OPTIONS...] [RECIPE_FILE]
 
-  cofu -- Minimum configuration management tool.
-  version 0.0.1 (3dbc091a9ab67a7572e9d5f97e901cef0816fa8d)
+cofu -- Minimum configuration management tool.
+version 0.8.0 (a939ee4abfa416d3e598c828ef89d4c8e6168857)
 
 Options:
-  -e 'command'               Execute 'command'
+  -e 'recipe'                Execute 'recipe'
   -l, -log-level=LEVEL       Log level (quiet|error|warning|info|debug). Default is 'info'.
   -h, -help                  Show help
   -n, -dry-run               Runs dry-run mode

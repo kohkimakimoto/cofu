@@ -2,8 +2,6 @@
 
 Minimum configuration management tool written in Go.
 
-This software is highly inspired by [itamae-kitchen/itamae](https://github.com/itamae-kitchen/itamae).
-
 ## Installation
 
 Cofu is provided as a single binary. You can download it and drop it in your $PATH.
@@ -24,51 +22,45 @@ service "nginx" {
 $ sudo cofu recipe.lua
 ```
 
-Usage is covered in more detail in the [Documentation](./docs/README.md).
+Usage is covered in more detail in the [Documentation](#documentation).
+
+## Supported Platforms
+
+* CentOS6
+* CentOS7
+* Debian8
+* Debian9
+* Ubuntu16.04
+* Ubuntu18.04
 
 ## Documentation
 
-See [Documentation](./docs/README.md)
+If you're just getting started with Cofu, please start to read [Getting Started](docs/getting-started.md).
 
-## Notable Limitation!
+* [Getting Started](docs/getting-started.md)
+* [Configuration](docs/configuration.md)
+* [Resources](docs/resources.md)
+    * [directory](docs/resources_directory.md)
+    * [execute](docs/resources_execute.md)
+    * [file](docs/resources_file.md)
+    * [group](docs/resources_group.md)
+    * [link](docs/resources_link.md)
+    * [lua_function](docs/resources_lua_function.md)
+    * [remote_directory](docs/resources_remote_directory.md)
+    * [remote_file](docs/resources_remote_file.md)
+    * [service](docs/resources_service.md)
+    * [software_package](docs/resources_software_package.md)
+    * [template](docs/resources_template.md)
+    * [user](docs/resources_user.md)
+* [Variables](docs/variables.md)
+* [Built-in Functions](docs/built-in-functions.md)
+    * [include_recipe](docs/built-in-functions_include_recipe.md)
+    * [run_command](docs/built-in-functions_run_command.md)
+* [Built-in Libraries](docs/built-in-libraries.md)
 
-I am testing Cofu on only el6 and el7 (CentOS6, CentOS7) in development. Therefore, Cofu does not officially support running on the other platforms.
+## See Also
 
-But, to support running on multi platforms in future, Cofu is designed to execute different code by each platforms. This code is inspired by [mizzy/specinfra](https://github.com/mizzy/specinfra). If you want Cofu to support other platforms, try to port [mizzy/specinfra](https://github.com/mizzy/specinfra) code to Go code: https://github.com/kohkimakimoto/cofu/tree/master/infra
-
-## Developing Cofu
-
-Requirements
-
-* Go 1.8 or later (my development env)
-* [Glide](https://glide.sh/)
-* [gox](https://github.com/mitchellh/gox)
-
-Installing dependences
-
-```
-$ make deps
-```
-
-Building dev binary.
-
-```
-$ make dev
-```
-
-Building distributed binaries.
-
-
-```
-$ make dist
-```
-
-Building packages (now support only RPM)
-
-```
-$ make dist
-$ make packaging
-```
+This software is highly inspired by [itamae-kitchen/itamae](https://github.com/itamae-kitchen/itamae).
 
 ## Author
 

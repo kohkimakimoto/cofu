@@ -4,6 +4,8 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+// Definition is deprecated from v0.8.0
+
 type Definition struct {
 	Name   string
 	Params *lua.LTable

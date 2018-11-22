@@ -246,7 +246,9 @@ func (app *App) Run() error {
 		}
 	}
 
-	log.Print("==> Starting " + Name + "...")
+	if loglv.IsInfo() {
+		log.Print("==> Starting " + Name + "...")
+	}
 
 	if loglv.IsDebug() {
 		log.Printf("    (Debug) Log level '%s'", loglv.LvString())
@@ -254,10 +256,14 @@ func (app *App) Run() error {
 		log.Printf("    (Debug) os_release '%s'", app.Infra.Command().OSRelease())
 	}
 
-	log.Printf("==> Loaded %d resources.", len(app.Resources))
+	if loglv.IsInfo() {
+		log.Printf("==> Loaded %d resources.", len(app.Resources))
+	}
 
 	if app.DryRun {
-		log.Print(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
+		if loglv.IsInfo() {
+			log.Print(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
+		}
 	}
 
 	for _, r := range app.Resources {
@@ -280,7 +286,10 @@ func (app *App) Run() error {
 		}
 	}
 
-	log.Printf("==> Complete!")
+	if loglv.IsInfo() {
+		log.Printf("==> Complete!")
+	}
+
 	return nil
 }
 
