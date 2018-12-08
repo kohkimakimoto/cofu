@@ -179,7 +179,7 @@ func (app *App) LoadRecipeFile(recipeFile string) error {
 	return nil
 }
 
-func (app *App) RemoveDuplicateDelayeNotification() {
+func (app *App) RemoveDuplicateDelayedNotification() {
 	newDelayedNotifications := []*Notification{}
 
 	for _, n := range app.DelayedNotifications {
@@ -278,7 +278,7 @@ func (app *App) Run() error {
 		}
 	}
 
-	app.RemoveDuplicateDelayeNotification()
+	app.RemoveDuplicateDelayedNotification()
 	for {
 		n := app.DequeueDelayedNotification()
 		if n == nil {
