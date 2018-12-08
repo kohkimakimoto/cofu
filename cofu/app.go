@@ -200,11 +200,11 @@ func (app *App) RemoveDuplicateDelayeNotification() {
 	app.DelayedNotifications = newDelayedNotifications
 }
 
-func (app *App) EnqueueDelayeNotification(n *Notification) {
+func (app *App) EnqueueDelayedNotification(n *Notification) {
 	app.DelayedNotifications = append(app.DelayedNotifications, n)
 }
 
-func (app *App) DequeueDelayeNotification() *Notification {
+func (app *App) DequeueDelayedNotification() *Notification {
 	if len(app.DelayedNotifications) == 0 {
 		return nil
 	}
@@ -280,7 +280,7 @@ func (app *App) Run() error {
 
 	app.RemoveDuplicateDelayeNotification()
 	for {
-		n := app.DequeueDelayeNotification()
+		n := app.DequeueDelayedNotification()
 		if n == nil {
 			break
 		}

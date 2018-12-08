@@ -347,7 +347,7 @@ func (r *Resource) notify() error {
 		}
 
 		if n.Delayed() {
-			r.App.EnqueueDelayeNotification(n)
+			r.App.EnqueueDelayedNotification(n)
 		} else if n.Immediately() {
 			if err := n.Run(); err != nil {
 				return err
