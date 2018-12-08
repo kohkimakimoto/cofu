@@ -42,7 +42,12 @@ func (resourceType *ResourceType) LGFunction() func(L *lua.LState) int {
 }
 
 func (resourceType *ResourceType) registerResource(L *lua.LState, name string) *Resource {
-	app := GetApp(L)
+	app, err := GetApp(L)
+	if err != nil {
+		L.RaiseError(err.Error())
+		return nil
+	}
+
 	r := NewResource(name, resourceType, app)
 
 	if loglv.IsDebug() {

@@ -2,6 +2,7 @@ package cofu
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -355,18 +356,18 @@ func (app *App) SendDirectoryToTempDirectory(src string) (string, error) {
 	return tmpDir2, nil
 }
 
-func GetApp(L *lua.LState) *App {
+func GetApp(L *lua.LState) (*App, error) {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
 	if !ok {
-		panic("Couldn't get a app object from LState. Your global variable '" + LUA_APP_KEY + "' was broken!")
+		return nil, errors.New("Couldn't get a app object from LState. Your global variable '" + LUA_APP_KEY + "' was broken!")
 	}
 
 	app, ok := ud.Value.(*App)
 	if !ok {
-		panic("Your global variable '" + LUA_APP_KEY + "' was broken!")
+		return nil, errors.New("Your global variable '" + LUA_APP_KEY + "' was broken!")
 	}
 
-	return app
+	return app, nil
 }
 
 func toLValue(L *lua.LState, value interface{}) lua.LValue {
