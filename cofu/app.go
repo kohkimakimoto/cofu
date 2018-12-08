@@ -78,7 +78,9 @@ func (app *App) Init() error {
 
 	// load resource types and define lua functions.
 	for _, resourceType := range app.ResourceTypes {
-		app.loadResourceType(resourceType)
+		if err := app.loadResourceType(resourceType); err != nil {
+			return err
+		}
 	}
 
 	// load lua libraries.
@@ -94,9 +96,9 @@ func (app *App) Init() error {
 	return nil
 }
 
-func (app *App) loadResourceType(resourceType *ResourceType) {
+func (app *App) loadResourceType(resourceType *ResourceType) error {
 	if _, ok := app.ResourceTypesMap[resourceType.Name]; ok {
-		panic(fmt.Sprintf("Already defined resource type '%s'", resourceType.Name))
+		return fmt.Errorf("Already defined resource type '%s'", resourceType.Name)
 	}
 	app.ResourceTypesMap[resourceType.Name] = resourceType
 
@@ -113,6 +115,8 @@ func (app *App) loadResourceType(resourceType *ResourceType) {
 	resourceType.Actions["nothing"] = func(r *Resource) error {
 		return nil
 	}
+
+	return nil
 }
 
 func (app *App) LoadDefinition(definition *Definition) {
