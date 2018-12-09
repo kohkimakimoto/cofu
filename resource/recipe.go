@@ -26,6 +26,7 @@ var Recipe = &cofu.ResourceType{
 	},
 	PreAction:                recipePreAction,
 	SetCurrentAttributesFunc: recipeSetCurrentAttributes,
+	ShowDifferences:          recipeShowDifferences,
 	Actions: map[string]cofu.ResourceAction{
 		"run": recipeRunAction,
 	},
@@ -42,6 +43,10 @@ func recipePreAction(r *cofu.Resource) error {
 func recipeSetCurrentAttributes(r *cofu.Resource) error {
 	r.CurrentAttributes["loaded"] = false
 
+	return nil
+}
+
+func recipeShowDifferences(r *cofu.Resource) error {
 	return nil
 }
 
@@ -83,6 +88,7 @@ func recipeRunAction(r *cofu.Resource) error {
 	if err := app.LoadRecipeFile(path); err != nil {
 		return err
 	}
+
 
 	if err := app.Run(); err != nil {
 		return err

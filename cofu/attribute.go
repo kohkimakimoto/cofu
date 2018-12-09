@@ -27,6 +27,9 @@ var CommonAttributes = []Attribute{
 		Name:    "verify",
 		Default: nil,
 	},
+	&StringAttribute{
+		Name: "description",
+	},
 }
 
 type Attribute interface {

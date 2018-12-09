@@ -258,7 +258,12 @@ func (r *Resource) Run(specificAction string) error {
 	}
 
 	if loglv.IsInfo() {
-		log.Print(color.FgBold(fmt.Sprintf("Evaluating %s", r.Desc())))
+		description := r.GetStringAttribute("description")
+		if description != "" {
+			log.Print(color.FgBold(fmt.Sprintf("Evaluating %s: %s", r.Desc(), description)))
+		} else {
+			log.Print(color.FgBold(fmt.Sprintf("Evaluating %s", r.Desc())))
+		}
 	}
 
 	if loglv.IsDebug() {

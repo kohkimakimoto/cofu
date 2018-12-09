@@ -18,6 +18,7 @@ If you're just getting started with Cofu, please start to read [Getting Started]
     * [software_package](resources_software_package.md)
     * [template](resources_template.md)
     * [user](resources_user.md)
+    * [recipe](resources_recipe.md)
 * [Variables](variables.md)
 * [Built-in Functions](built-in-functions.md)
     * [include_recipe](built-in-functions_include_recipe.md)
