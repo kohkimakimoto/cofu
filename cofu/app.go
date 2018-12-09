@@ -33,6 +33,7 @@ type App struct {
 	Parent               *App
 	Level                int
 	LogIndent            string
+	BuiltinRecipes       map[string]string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
@@ -54,6 +55,7 @@ func NewApp() *App {
 		Parent: nil,
 		Level:  0,
 		LogIndent: LogIndent(0),
+		BuiltinRecipes:      map[string]string{},
 	}
 
 	ud := L.NewUserData()

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"github.com/kohkimakimoto/cofu/cofu"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -61,6 +62,16 @@ func recipeRunAction(r *cofu.Resource) error {
 		path += ".lua"
 	}
 
+	var builtInRecipe string
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// not found. try to find builtin recipe
+		path = r.GetStringAttribute("path")
+		recipe, ok := r.App.BuiltinRecipes[path]
+		if ok {
+			builtInRecipe = recipe
+		}
+	}
+
 	// load variables
 	variables := r.GetMapAttribute("variables")
 	if variables == nil {
@@ -76,6 +87,7 @@ func recipeRunAction(r *cofu.Resource) error {
 	app.Parent = r.App
 	app.Level = r.App.Level + 1
 	app.LogIndent = cofu.LogIndent(app.Level)
+	app.BuiltinRecipes = r.App.BuiltinRecipes
 
 	if err := app.Init(); err != nil {
 		return err
@@ -85,8 +97,14 @@ func recipeRunAction(r *cofu.Resource) error {
 		return err
 	}
 
-	if err := app.LoadRecipeFile(path); err != nil {
-		return err
+	if builtInRecipe != "" {
+		if err := app.LoadRecipe(builtInRecipe); err != nil {
+			return err
+		}
+	} else {
+		if err := app.LoadRecipeFile(path); err != nil {
+			return err
+		}
 	}
 
 
@@ -95,4 +113,8 @@ func recipeRunAction(r *cofu.Resource) error {
 	}
 
 	return nil
+}
+
+var DefaultBuiltinRecipes = map[string]string{
+	"testing": `print("testing!")`,
 }
