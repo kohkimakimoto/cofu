@@ -52,8 +52,8 @@ $ sudo cofu recipe.lua
 Starting cofu...
 Loaded 2 resources.
 Evaluating software_package[nginx]
-    software_package[nginx]: installed will change from 'false' to 'true'
+software_package[nginx]: installed will change from 'false' to 'true'
 Evaluating service[nginx]
-    service[nginx]: running will change from 'false' to 'true'
+service[nginx]: running will change from 'false' to 'true'
 Complete!
 ```
