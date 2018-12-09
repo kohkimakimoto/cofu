@@ -52,10 +52,10 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
-		Parent: nil,
-		Level:  0,
-		LogIndent: LogIndent(0),
-		BuiltinRecipes:      map[string]string{},
+		Parent:         nil,
+		Level:          0,
+		LogIndent:      LogIndent(0),
+		BuiltinRecipes: map[string]string{},
 	}
 
 	ud := L.NewUserData()

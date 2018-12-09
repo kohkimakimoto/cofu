@@ -107,7 +107,6 @@ func recipeRunAction(r *cofu.Resource) error {
 		}
 	}
 
-
 	if err := app.Run(); err != nil {
 		return err
 	}
