@@ -42,18 +42,23 @@ func (resourceType *ResourceType) LGFunction() func(L *lua.LState) int {
 }
 
 func (resourceType *ResourceType) registerResource(L *lua.LState, name string) *Resource {
-	app := GetApp(L)
+	app, err := GetApp(L)
+	if err != nil {
+		L.RaiseError(err.Error())
+		return nil
+	}
+
 	r := NewResource(name, resourceType, app)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) registering resource '%s'", r.Desc())
+		log.Printf("(Debug) registering resource '%s'", r.Desc())
 	}
 
 	// set default attributes
 	for _, definedAttribute := range resourceType.Attributes {
 		if definedAttribute.HasDefault() {
 			if loglv.IsDebug() {
-				log.Printf("    (Debug) Set default: %s = %s", definedAttribute.GetName(), definedAttribute.GetDefault())
+				log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), definedAttribute.GetDefault())
 			}
 
 			r.Attributes[definedAttribute.GetName()] = definedAttribute.GetDefault()
@@ -63,14 +68,14 @@ func (resourceType *ResourceType) registerResource(L *lua.LState, name string) *
 		case *StringAttribute:
 			if a.IsDefaultName() {
 				if loglv.IsDebug() {
-					log.Printf("    (Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
+					log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
 				}
 				r.Attributes[definedAttribute.GetName()] = r.Name
 			}
 		case *StringSliceAttribute:
 			if a.IsDefaultName() {
 				if loglv.IsDebug() {
-					log.Printf("    (Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
+					log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
 				}
 				r.Attributes[definedAttribute.GetName()] = r.Name
 			}

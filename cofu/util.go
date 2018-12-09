@@ -52,8 +52,8 @@ func toString(v lua.LValue) (string, bool) {
 	}
 }
 
-// currentDir returns a directory path that includes lua source file which is executed now.
-func currentDir(L *lua.LState) string {
+// CurrentDir returns a directory path that includes lua source file which is executed now.
+func CurrentDir(L *lua.LState) string {
 	// same: debug.getinfo(2,'S').source
 	var dbg *lua.Debug
 	var err error
@@ -72,7 +72,7 @@ func currentDir(L *lua.LState) string {
 }
 
 func basepath(L *lua.LState) (string, error) {
-	p, err := realpath.Realpath(currentDir(L))
+	p, err := realpath.Realpath(CurrentDir(L))
 	if err != nil {
 		return "", err
 	}

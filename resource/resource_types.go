@@ -18,4 +18,5 @@ var ResourceTypes = []*cofu.ResourceType{
 	RemoteDirectory,
 	Template,
 	User,
+	Recipe,
 }

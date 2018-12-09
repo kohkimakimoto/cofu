@@ -33,6 +33,7 @@ software_package "nginx" {
 * [software_package](resources_software_package.md)
 * [template](resources_template.md)
 * [user](resources_user.md)
+* [recipe](resources_recipe.md)
 
 ## Common Attributes
 
@@ -65,8 +66,10 @@ All resource types have the following common attributes.
   ```lua
   notifies = {{"restart", "service[httpd]", "immediately"}, {"restart", "service[nginx]"}}
   ```
-
+  
 * `verify` (string or table): If you specified this, runs the commands. If the result of the commands is non-zero status, Cofu exits with error.
+
+* `description` (string): If you specified this, Cofu show this description when the resource evaluates. 
 
 ## Common Actions
 

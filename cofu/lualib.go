@@ -75,7 +75,12 @@ func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
 func cofuIndex(L *lua.LState) int {
 	// cofuModule := L.CheckTable(1)
 	index := L.CheckString(2)
-	app := GetApp(L)
+	app, err := GetApp(L)
+	if err != nil {
+		L.RaiseError(err.Error())
+		L.Push(lua.LNil)
+		return 1
+	}
 
 	var v lua.LValue
 	switch index {
@@ -173,10 +178,16 @@ func fnRunCommand(L *lua.LState) int {
 	command := L.CheckString(1)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) command: %s", command)
+		log.Printf("(Debug) command: %s", command)
 	}
 
-	app := GetApp(L)
+	app, err := GetApp(L)
+	if err != nil {
+		L.RaiseError(err.Error())
+		L.Push(lua.LNil)
+		return 1
+	}
+
 	i := app.Infra
 	result := i.RunCommand(command)
 
@@ -188,7 +199,7 @@ func fnIncludeRecipe(L *lua.LState) int {
 	path := L.CheckString(1)
 
 	if !filepath.IsAbs(path) {
-		current := currentDir(L)
+		current := CurrentDir(L)
 		path = filepath.Join(current, path)
 	}
 
@@ -224,7 +235,10 @@ func fnDefine(L *lua.LState) int {
 }
 
 func registerDefinition(L *lua.LState, name string, config *lua.LTable) {
-	app := GetApp(L)
+	app, err := GetApp(L)
+	if err != nil {
+		L.RaiseError(err.Error())
+	}
 
 	// get a last element
 	last := config.Remove(-1)

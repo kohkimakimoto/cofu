@@ -101,6 +101,7 @@ Options:
 	app.LogLevel = optLogLevel
 	app.DryRun = optDryRun
 	app.ResourceTypes = resource.ResourceTypes
+	app.BuiltinRecipes = resource.DefaultBuiltinRecipes
 	if err := app.Init(); err != nil {
 		printError(err)
 		status = 1

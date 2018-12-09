@@ -2,19 +2,20 @@ package cofu
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/kohkimakimoto/cofu/infra"
+	"github.com/kohkimakimoto/cofu/support/color"
+	"github.com/kohkimakimoto/loglv"
+	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
-
-	"github.com/kohkimakimoto/cofu/infra"
-	"github.com/kohkimakimoto/cofu/support/color"
-	"github.com/kohkimakimoto/loglv"
-	"github.com/yuin/gopher-lua"
 )
 
 type App struct {
@@ -29,6 +30,10 @@ type App struct {
 	Tmpdir               string
 	Tmpfiles             []string
 	variable             map[string]interface{}
+	Parent               *App
+	Level                int
+	LogIndent            string
+	BuiltinRecipes       map[string]string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
@@ -47,6 +52,10 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
+		Parent:         nil,
+		Level:          0,
+		LogIndent:      LogIndent(0),
+		BuiltinRecipes: map[string]string{},
 	}
 
 	ud := L.NewUserData()
@@ -61,6 +70,7 @@ func NewApp() *App {
 func (app *App) Init() error {
 	// It intends not to output timestamp with log.
 	log.SetFlags(0)
+	log.SetPrefix(app.LogIndent)
 	// support leveled logging.
 	loglv.Init()
 	// output to stdout
@@ -77,7 +87,9 @@ func (app *App) Init() error {
 
 	// load resource types and define lua functions.
 	for _, resourceType := range app.ResourceTypes {
-		app.loadResourceType(resourceType)
+		if err := app.loadResourceType(resourceType); err != nil {
+			return err
+		}
 	}
 
 	// load lua libraries.
@@ -93,9 +105,9 @@ func (app *App) Init() error {
 	return nil
 }
 
-func (app *App) loadResourceType(resourceType *ResourceType) {
+func (app *App) loadResourceType(resourceType *ResourceType) error {
 	if _, ok := app.ResourceTypesMap[resourceType.Name]; ok {
-		panic(fmt.Sprintf("Already defined resource type '%s'", resourceType.Name))
+		return fmt.Errorf("Already defined resource type '%s'", resourceType.Name)
 	}
 	app.ResourceTypesMap[resourceType.Name] = resourceType
 
@@ -112,6 +124,8 @@ func (app *App) loadResourceType(resourceType *ResourceType) {
 	resourceType.Actions["nothing"] = func(r *Resource) error {
 		return nil
 	}
+
+	return nil
 }
 
 func (app *App) LoadDefinition(definition *Definition) {
@@ -124,6 +138,10 @@ func (app *App) Close() {
 	app.LState.Close()
 	for _, f := range app.Tmpfiles {
 		os.RemoveAll(f)
+	}
+
+	if app.Parent != nil {
+		log.SetPrefix(app.Parent.LogIndent)
 	}
 }
 
@@ -158,6 +176,19 @@ func (app *App) LoadVariableFromJSONFile(jsonFile string) error {
 	return nil
 }
 
+func (app *App) LoadVariableFromMap(m map[string]interface{}) error {
+	variable := app.variable
+	for k, v := range m {
+		variable[k] = v
+	}
+	app.variable = variable
+
+	L := app.LState
+	L.SetGlobal("var", toLValue(L, app.variable))
+
+	return nil
+}
+
 func (app *App) LoadRecipe(recipeContent string) error {
 	if err := app.LState.DoString(recipeContent); err != nil {
 		return err
@@ -174,7 +205,7 @@ func (app *App) LoadRecipeFile(recipeFile string) error {
 	return nil
 }
 
-func (app *App) RemoveDuplicateDelayeNotification() {
+func (app *App) RemoveDuplicateDelayedNotification() {
 	newDelayedNotifications := []*Notification{}
 
 	for _, n := range app.DelayedNotifications {
@@ -195,11 +226,11 @@ func (app *App) RemoveDuplicateDelayeNotification() {
 	app.DelayedNotifications = newDelayedNotifications
 }
 
-func (app *App) EnqueueDelayeNotification(n *Notification) {
+func (app *App) EnqueueDelayedNotification(n *Notification) {
 	app.DelayedNotifications = append(app.DelayedNotifications, n)
 }
 
-func (app *App) DequeueDelayeNotification() *Notification {
+func (app *App) DequeueDelayedNotification() *Notification {
 	if len(app.DelayedNotifications) == 0 {
 		return nil
 	}
@@ -246,24 +277,24 @@ func (app *App) Run() error {
 		}
 	}
 
-	if loglv.IsInfo() {
-		log.Print("==> Starting " + Name + "...")
+	if loglv.IsInfo() && app.IsRootApp() {
+		log.Print("Starting " + Name + "...")
 	}
 
-	if loglv.IsDebug() {
-		log.Printf("    (Debug) Log level '%s'", loglv.LvString())
-		log.Printf("    (Debug) os_family '%s'", app.Infra.Command().OSFamily())
-		log.Printf("    (Debug) os_release '%s'", app.Infra.Command().OSRelease())
-	}
-
-	if loglv.IsInfo() {
-		log.Printf("==> Loaded %d resources.", len(app.Resources))
-	}
-
-	if app.DryRun {
+	if app.DryRun && app.IsRootApp() {
 		if loglv.IsInfo() {
-			log.Print(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
+			log.Print(color.FgCB("Running on dry-run mode. It does not affect any real resources."))
 		}
+	}
+
+	if loglv.IsDebug() && app.IsRootApp() {
+		log.Printf("(Debug) Log level '%s'", loglv.LvString())
+		log.Printf("(Debug) os_family '%s'", app.Infra.Command().OSFamily())
+		log.Printf("(Debug) os_release '%s'", app.Infra.Command().OSRelease())
+	}
+
+	if loglv.IsInfo() {
+		log.Printf("Loaded %d resources.", len(app.Resources))
 	}
 
 	for _, r := range app.Resources {
@@ -273,9 +304,9 @@ func (app *App) Run() error {
 		}
 	}
 
-	app.RemoveDuplicateDelayeNotification()
+	app.RemoveDuplicateDelayedNotification()
 	for {
-		n := app.DequeueDelayeNotification()
+		n := app.DequeueDelayedNotification()
 		if n == nil {
 			break
 		}
@@ -286,8 +317,8 @@ func (app *App) Run() error {
 		}
 	}
 
-	if loglv.IsInfo() {
-		log.Printf("==> Complete!")
+	if loglv.IsInfo() && app.IsRootApp() {
+		log.Printf("Complete!")
 	}
 
 	return nil
@@ -355,18 +386,22 @@ func (app *App) SendDirectoryToTempDirectory(src string) (string, error) {
 	return tmpDir2, nil
 }
 
-func GetApp(L *lua.LState) *App {
+func (app *App) IsRootApp() bool {
+	return app.Level == 0
+}
+
+func GetApp(L *lua.LState) (*App, error) {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
 	if !ok {
-		panic("Couldn't get a app object from LState. Your global variable '" + LUA_APP_KEY + "' was broken!")
+		return nil, errors.New("Couldn't get a app object from LState. Your global variable '" + LUA_APP_KEY + "' was broken!")
 	}
 
 	app, ok := ud.Value.(*App)
 	if !ok {
-		panic("Your global variable '" + LUA_APP_KEY + "' was broken!")
+		return nil, errors.New("Your global variable '" + LUA_APP_KEY + "' was broken!")
 	}
 
-	return app
+	return app, nil
 }
 
 func toLValue(L *lua.LState, value interface{}) lua.LValue {
@@ -391,4 +426,8 @@ func toLValue(L *lua.LState, value interface{}) lua.LValue {
 		return tbl
 	}
 	return lua.LNil
+}
+
+func LogIndent(level int) string {
+	return fmt.Sprintf("%s", strings.Repeat("  ", level))
 }
