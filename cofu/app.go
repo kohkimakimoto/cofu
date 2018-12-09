@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kohkimakimoto/cofu/infra"
+	"github.com/kohkimakimoto/cofu/support/color"
+	"github.com/kohkimakimoto/loglv"
+	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
-
-	"github.com/kohkimakimoto/cofu/infra"
-	"github.com/kohkimakimoto/cofu/support/color"
-	"github.com/kohkimakimoto/loglv"
-	"github.com/yuin/gopher-lua"
 )
 
 type App struct {
@@ -30,6 +30,9 @@ type App struct {
 	Tmpdir               string
 	Tmpfiles             []string
 	variable             map[string]interface{}
+	Parent               *App
+	Level                int
+	LogIndent            string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
@@ -48,6 +51,9 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
+		Parent: nil,
+		Level:  0,
+		LogIndent: LogIndent(0),
 	}
 
 	ud := L.NewUserData()
@@ -62,6 +68,7 @@ func NewApp() *App {
 func (app *App) Init() error {
 	// It intends not to output timestamp with log.
 	log.SetFlags(0)
+	log.SetPrefix(app.LogIndent)
 	// support leveled logging.
 	loglv.Init()
 	// output to stdout
@@ -130,6 +137,10 @@ func (app *App) Close() {
 	for _, f := range app.Tmpfiles {
 		os.RemoveAll(f)
 	}
+
+	if app.Parent != nil {
+		log.SetPrefix(app.Parent.LogIndent)
+	}
 }
 
 func (app *App) LoadVariableFromJSON(v string) error {
@@ -156,6 +167,19 @@ func (app *App) LoadVariableFromJSONFile(jsonFile string) error {
 	if err != nil {
 		return err
 	}
+
+	L := app.LState
+	L.SetGlobal("var", toLValue(L, app.variable))
+
+	return nil
+}
+
+func (app *App) LoadVariableFromMap(m map[string]interface{}) error {
+	variable := app.variable
+	for k, v := range m {
+		variable[k] = v
+	}
+	app.variable = variable
 
 	L := app.LState
 	L.SetGlobal("var", toLValue(L, app.variable))
@@ -251,24 +275,24 @@ func (app *App) Run() error {
 		}
 	}
 
-	if loglv.IsInfo() {
-		log.Print("==> Starting " + Name + "...")
+	if loglv.IsInfo() && app.IsRootApp() {
+		log.Print("Starting " + Name + "...")
 	}
 
-	if loglv.IsDebug() {
-		log.Printf("    (Debug) Log level '%s'", loglv.LvString())
-		log.Printf("    (Debug) os_family '%s'", app.Infra.Command().OSFamily())
-		log.Printf("    (Debug) os_release '%s'", app.Infra.Command().OSRelease())
-	}
-
-	if loglv.IsInfo() {
-		log.Printf("==> Loaded %d resources.", len(app.Resources))
-	}
-
-	if app.DryRun {
+	if app.DryRun && app.IsRootApp() {
 		if loglv.IsInfo() {
-			log.Print(color.FgCB("    Running on dry-run mode. It does not affect any real resources."))
+			log.Print(color.FgCB("Running on dry-run mode. It does not affect any real resources."))
 		}
+	}
+
+	if loglv.IsDebug() && app.IsRootApp() {
+		log.Printf("(Debug) Log level '%s'", loglv.LvString())
+		log.Printf("(Debug) os_family '%s'", app.Infra.Command().OSFamily())
+		log.Printf("(Debug) os_release '%s'", app.Infra.Command().OSRelease())
+	}
+
+	if loglv.IsInfo() {
+		log.Printf("Loaded %d resources.", len(app.Resources))
 	}
 
 	for _, r := range app.Resources {
@@ -291,8 +315,8 @@ func (app *App) Run() error {
 		}
 	}
 
-	if loglv.IsInfo() {
-		log.Printf("==> Complete!")
+	if loglv.IsInfo() && app.IsRootApp() {
+		log.Printf("Complete!")
 	}
 
 	return nil
@@ -360,6 +384,10 @@ func (app *App) SendDirectoryToTempDirectory(src string) (string, error) {
 	return tmpDir2, nil
 }
 
+func (app *App) IsRootApp() bool {
+	return app.Level == 0
+}
+
 func GetApp(L *lua.LState) (*App, error) {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
 	if !ok {
@@ -396,4 +424,8 @@ func toLValue(L *lua.LState, value interface{}) lua.LValue {
 		return tbl
 	}
 	return lua.LNil
+}
+
+func LogIndent(level int) string {
+	return fmt.Sprintf("%s", strings.Repeat("  ", level))
 }

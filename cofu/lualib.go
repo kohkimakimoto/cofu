@@ -178,7 +178,7 @@ func fnRunCommand(L *lua.LState) int {
 	command := L.CheckString(1)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) command: %s", command)
+		log.Printf("(Debug) command: %s", command)
 	}
 
 	app, err := GetApp(L)
@@ -199,7 +199,7 @@ func fnIncludeRecipe(L *lua.LState) int {
 	path := L.CheckString(1)
 
 	if !filepath.IsAbs(path) {
-		current := currentDir(L)
+		current := CurrentDir(L)
 		path = filepath.Join(current, path)
 	}
 

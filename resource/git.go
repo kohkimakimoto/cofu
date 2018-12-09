@@ -153,7 +153,7 @@ func gitRunCommandInRepo(r *cofu.Resource, command string) *backend.CommandResul
 	command = i.BuildCommand(command, opt)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) command: %s", command)
+		log.Printf("(Debug) command: %s", command)
 	}
 
 	return i.RunCommand(command)

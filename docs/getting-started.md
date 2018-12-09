@@ -49,11 +49,11 @@ And then execute `cofu` command to apply a recipe to your machine.
 
 ```
 $ sudo cofu recipe.lua
-==> Starting cofu...
-==> Loaded 2 resources.
-==> Evaluating software_package[nginx]
+Starting cofu...
+Loaded 2 resources.
+Evaluating software_package[nginx]
     software_package[nginx]: installed will change from 'false' to 'true'
-==> Evaluating service[nginx]
+Evaluating service[nginx]
     service[nginx]: running will change from 'false' to 'true'
-==> Complete!
+Complete!
 ```

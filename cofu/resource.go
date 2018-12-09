@@ -41,7 +41,7 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 		}
 		basepath = wd
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
+			log.Printf("(Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
 
 		}
 	}
@@ -258,11 +258,11 @@ func (r *Resource) Run(specificAction string) error {
 	}
 
 	if loglv.IsInfo() {
-		log.Print(color.FgBold(fmt.Sprintf("==> Evaluating %s", r.Desc())))
+		log.Print(color.FgBold(fmt.Sprintf("Evaluating %s", r.Desc())))
 	}
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) Resource basepath: %s", r.Basepath)
+		log.Printf("(Debug) Resource basepath: %s", r.Basepath)
 	}
 
 	err := os.Chdir(r.Basepath)
@@ -271,12 +271,12 @@ func (r *Resource) Run(specificAction string) error {
 	}
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) Changed current directory: %s", r.Basepath)
+		log.Printf("(Debug) Changed current directory: %s", r.Basepath)
 	}
 
 	if r.doNotRunBecauseOfOnlyIf() {
 		if loglv.IsInfo() {
-			log.Print("    Execution skipped because of only_if attribute.")
+			log.Print("Execution skipped because of only_if attribute.")
 		}
 
 		return nil
@@ -284,7 +284,7 @@ func (r *Resource) Run(specificAction string) error {
 
 	if r.doNotRunBecauseOfNotIf() {
 		if loglv.IsInfo() {
-			log.Print("    Execution skipped because of not_if attribute.")
+			log.Print("Execution skipped because of not_if attribute.")
 		}
 		return nil
 	}
@@ -320,7 +320,7 @@ func (r *Resource) verify() error {
 	}
 
 	if loglv.IsInfo() {
-		log.Print("    Verifying...")
+		log.Print("Verifying...")
 	}
 
 	for _, c := range commands {
@@ -335,7 +335,7 @@ func (r *Resource) verify() error {
 
 func (r *Resource) notify() error {
 	for _, n := range r.Notifications {
-		message := fmt.Sprintf("    %s: Notifying %s to %s", r.Desc(), n.Action, n.TargetResourceDesc)
+		message := fmt.Sprintf("%s: Notifying %s to %s", r.Desc(), n.Action, n.TargetResourceDesc)
 		if n.Delayed() {
 			message = fmt.Sprintf("%s (delayed)", message)
 		} else if n.Immediately() {
@@ -374,7 +374,7 @@ func (r *Resource) runAction(action string) error {
 
 	if resourceType.PreAction != nil {
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Processing '%s' PreAction", r.Desc())
+			log.Printf("(Debug) Processing '%s' PreAction", r.Desc())
 		}
 		err := resourceType.PreAction(r)
 		if err != nil {
@@ -382,13 +382,13 @@ func (r *Resource) runAction(action string) error {
 		}
 
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Finished '%s' PreAction", r.Desc())
+			log.Printf("(Debug) Finished '%s' PreAction", r.Desc())
 		}
 	}
 
 	if resourceType.SetCurrentAttributesFunc != nil {
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Processing '%s' SetCurrentAttributes", r.Desc())
+			log.Printf("(Debug) Processing '%s' SetCurrentAttributes", r.Desc())
 		}
 
 		err := resourceType.SetCurrentAttributesFunc(r)
@@ -397,13 +397,13 @@ func (r *Resource) runAction(action string) error {
 		}
 
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Finished '%s' SetCurrentAttributes", r.Desc())
+			log.Printf("(Debug) Finished '%s' SetCurrentAttributes", r.Desc())
 		}
 	}
 
 	if resourceType.ShowDifferences != nil {
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Processing '%s' ShowDifferences", r.Desc())
+			log.Printf("(Debug) Processing '%s' ShowDifferences", r.Desc())
 		}
 
 		err := resourceType.ShowDifferences(r)
@@ -412,21 +412,21 @@ func (r *Resource) runAction(action string) error {
 		}
 
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Finished '%s' ShowDifferences", r.Desc())
+			log.Printf("(Debug) Finished '%s' ShowDifferences", r.Desc())
 		}
 	}
 
 	if !r.different() {
 		// run action only if the attributes change.
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) There are not attributes to change '%s'", r.Desc())
+			log.Printf("(Debug) There are not attributes to change '%s'", r.Desc())
 		}
 		return nil
 	}
 
-	if !r.App.DryRun {
+	if !r.App.DryRun || r.ResourceType.Name == "recipe" {
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Processing '%s' action: '%s'", r.Desc(), action)
+			log.Printf("(Debug) Processing '%s' action: '%s'", r.Desc(), action)
 		}
 
 		err := actionFunc(r)
@@ -435,7 +435,7 @@ func (r *Resource) runAction(action string) error {
 		}
 
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Finished '%s' action: '%s'", r.Desc(), action)
+			log.Printf("(Debug) Finished '%s' action: '%s'", r.Desc(), action)
 		}
 
 		r.Update()
@@ -448,7 +448,7 @@ func (r *Resource) runAction(action string) error {
 // see also DefaultShowDifferences
 func (r *Resource) different() bool {
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) Checking difference of '%s'", r.Desc())
+		log.Printf("(Debug) Checking difference of '%s'", r.Desc())
 	}
 
 	var keys []string
@@ -459,12 +459,12 @@ func (r *Resource) different() bool {
 	sort.Strings(keys)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) Checked keys are '%v'", keys)
+		log.Printf("(Debug) Checked keys are '%v'", keys)
 	}
 
 	for _, key := range keys {
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Checking difference of the key '%s'", key)
+			log.Printf("(Debug) Checking difference of the key '%s'", key)
 		}
 
 		currentValue := r.CurrentAttributes[key]
@@ -486,7 +486,7 @@ func (r *Resource) different() bool {
 		}
 
 		if loglv.IsDebug() {
-			log.Printf("    (Debug) Checking difference '%s' (currentAttr: '%v') => (attr: '%v')", key, currentValue, value)
+			log.Printf("(Debug) Checking difference '%s' (currentAttr: '%v') => (attr: '%v')", key, currentValue, value)
 		}
 
 		if currentValue == nil || value == nil {
@@ -549,7 +549,7 @@ func (r *Resource) RunCommand(command string) *backend.CommandResult {
 	command = i.BuildCommand(command, opt)
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) command: %s", command)
+		log.Printf("(Debug) command: %s", command)
 	}
 
 	return i.RunCommand(command)
@@ -597,7 +597,7 @@ func (r *Resource) ShowContentDiff(from, to string) {
 	diff := fmt.Sprintf("diff -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) diff: %s", diff)
+		log.Printf("(Debug) diff: %s", diff)
 	}
 
 	stdout := r.RunCommand(diff).Stdout
@@ -614,11 +614,11 @@ func (r *Resource) ShowContentDiff(from, to string) {
 		line := string(linebytes)
 
 		if strings.HasPrefix(line, "+") {
-			log.Print(color.FgG("    %s", line))
+			log.Print(color.FgG(" %s", line))
 		} else if strings.HasPrefix(line, "-") {
-			log.Print(color.FgR("    %s", line))
+			log.Print(color.FgR(" %s", line))
 		} else {
-			log.Printf("    %s", line)
+			log.Printf("%s", line)
 		}
 	}
 }
@@ -627,7 +627,7 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 	diff := fmt.Sprintf("diff -r -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
 
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) diff: %s", diff)
+		log.Printf("(Debug) diff: %s", diff)
 	}
 
 	stdout := r.RunCommand(diff).Stdout
@@ -643,11 +643,11 @@ func (r *Resource) ShowContentDiffRecursively(from, to string) {
 
 		if loglv.IsInfo() {
 			if strings.HasPrefix(line, "+") {
-				log.Print(color.FgG("    %s", line))
+				log.Print(color.FgG(" %s", line))
 			} else if strings.HasPrefix(line, "-") {
-				log.Print(color.FgR("    %s", line))
+				log.Print(color.FgR(" %s", line))
 			} else {
-				log.Printf("    %s", line)
+				log.Printf("%s", line)
 			}
 		}
 	}
@@ -664,7 +664,7 @@ func (r *Resource) Update() {
 
 	r.updated = true
 	if loglv.IsDebug() {
-		log.Printf("    (Debug) Resource '%s' is updated.", r.Desc())
+		log.Printf("(Debug) Resource '%s' is updated.", r.Desc())
 	}
 }
 
@@ -709,11 +709,11 @@ func DefaultShowDifferences(r *Resource) error {
 		} else if currentValue == value || value == nil {
 			// ignore. not change
 			if loglv.IsDebug() {
-				log.Printf("    (Debug) %s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
+				log.Printf("(Debug) %s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
 			}
 		} else {
 			if loglv.IsInfo() {
-				log.Print(color.FgGB("    %s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
+				log.Print(color.FgGB("%s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
 			}
 		}
 	}

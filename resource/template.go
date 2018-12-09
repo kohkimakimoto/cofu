@@ -72,7 +72,7 @@ func templatePreAction(r *cofu.Resource) error {
 				r.Attributes["source"] = ps
 				if _, err := os.Stat(ps); err == nil {
 					if loglv.IsDebug() {
-						log.Printf("    (Debug) '%s' is used as template file", ps)
+						log.Printf("(Debug) '%s' is used as template file", ps)
 					}
 					break
 				}
