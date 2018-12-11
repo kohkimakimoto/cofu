@@ -27,8 +27,11 @@ resource "example" {
 example.lua
 
 ```lua
-execute "ls -la"
+software_package "httpd"
 
+template "/etc/httpd/conf/httpd.conf" {
+
+}
 
 -- you can use varilabes in the recipe.
 print(var.variable1)
