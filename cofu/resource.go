@@ -20,16 +20,17 @@ import (
 type Resource struct {
 	Name string
 	// Basepath is a directory path that includes recipe file defines this resource.
-	Basepath          string
-	Attributes        map[string]interface{}
-	AttributesLValues map[string]lua.LValue
-	CurrentAttributes map[string]interface{}
-	Notifications     []*Notification
-	ResourceType      *ResourceType
-	App               *App
-	CurrentAction     string
-	Values            map[string]interface{}
-	updated           bool
+	Basepath           string
+	Attributes         map[string]interface{}
+	AttributesLValues  map[string]lua.LValue
+	CurrentAttributes  map[string]interface{}
+	FallbackAttributes map[string]interface{}
+	Notifications      []*Notification
+	ResourceType       *ResourceType
+	App                *App
+	CurrentAction      string
+	Values             map[string]interface{}
+	updated            bool
 }
 
 func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
@@ -40,20 +41,19 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 			panic(err2)
 		}
 		basepath = wd
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
-
-		}
+		app.Logger.Debugf("Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
 	}
+
 	return &Resource{
-		Name:              name,
-		Attributes:        map[string]interface{}{},
-		AttributesLValues: map[string]lua.LValue{},
-		CurrentAttributes: map[string]interface{}{},
-		ResourceType:      resourceType,
-		App:               app,
-		Basepath:          basepath,
-		Values:            map[string]interface{}{},
+		Name:               name,
+		Attributes:         map[string]interface{}{},
+		AttributesLValues:  map[string]lua.LValue{},
+		CurrentAttributes:  map[string]interface{}{},
+		FallbackAttributes: map[string]interface{}{},
+		ResourceType:       resourceType,
+		App:                app,
+		Basepath:           basepath,
+		Values:             map[string]interface{}{},
 	}
 }
 
@@ -243,6 +243,7 @@ func (r *Resource) GetLFunctionCurrentAttribute(key string) *lua.LFunction {
 }
 
 func (r *Resource) Run(specificAction string) error {
+	logger := r.App.Logger
 	r.updated = false
 
 	var actions []string
@@ -260,37 +261,28 @@ func (r *Resource) Run(specificAction string) error {
 	if loglv.IsInfo() {
 		description := r.GetStringAttribute("description")
 		if description != "" {
-			log.Print(color.FgBold(fmt.Sprintf("Evaluating %s: %s", r.Desc(), description)))
+			logger.Info(color.FgBold(fmt.Sprintf("Evaluating %s: %s", r.Desc(), description)))
 		} else {
-			log.Print(color.FgBold(fmt.Sprintf("Evaluating %s", r.Desc())))
+			logger.Info(color.FgBold(fmt.Sprintf("Evaluating %s", r.Desc())))
 		}
 	}
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) Resource basepath: %s", r.Basepath)
-	}
+	logger.Debugf("Resource basepath: %s", r.Basepath)
 
 	err := os.Chdir(r.Basepath)
 	if err != nil {
 		return err
 	}
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) Changed current directory: %s", r.Basepath)
-	}
+	logger.Debugf("Changed current directory: %s", r.Basepath)
 
 	if r.doNotRunBecauseOfOnlyIf() {
-		if loglv.IsInfo() {
-			log.Print("Execution skipped because of only_if attribute.")
-		}
-
+		logger.Info("Execution skipped because of only_if attribute.")
 		return nil
 	}
 
 	if r.doNotRunBecauseOfNotIf() {
-		if loglv.IsInfo() {
-			log.Print("Execution skipped because of not_if attribute.")
-		}
+		logger.Info("Execution skipped because of not_if attribute.")
 		return nil
 	}
 
@@ -319,14 +311,13 @@ func (r *Resource) Run(specificAction string) error {
 }
 
 func (r *Resource) verify() error {
+	logger := r.App.Logger
 	commands := r.GetStringSliceAttribute("verify")
 	if commands == nil {
 		return nil
 	}
 
-	if loglv.IsInfo() {
-		log.Print("Verifying...")
-	}
+	logger.Info("Verifying...")
 
 	for _, c := range commands {
 		ret := r.RunCommand(c)
@@ -339,6 +330,8 @@ func (r *Resource) verify() error {
 }
 
 func (r *Resource) notify() error {
+	logger := r.App.Logger
+
 	for _, n := range r.Notifications {
 		message := fmt.Sprintf("%s: Notifying %s to %s", r.Desc(), n.Action, n.TargetResourceDesc)
 		if n.Delayed() {
@@ -347,9 +340,7 @@ func (r *Resource) notify() error {
 			message = fmt.Sprintf("%s (immediately)", message)
 		}
 
-		if loglv.IsInfo() {
-			log.Print(message)
-		}
+		logger.Info(message)
 
 		if n.Delayed() {
 			r.App.EnqueueDelayedNotification(n)
@@ -368,6 +359,8 @@ func (r *Resource) clearCurrentAttributes() {
 }
 
 func (r *Resource) runAction(action string) error {
+	logger := r.App.Logger
+
 	resourceType := r.ResourceType
 	actionFunc, ok := resourceType.Actions[action]
 	if !ok {
@@ -378,70 +371,52 @@ func (r *Resource) runAction(action string) error {
 	r.clearCurrentAttributes()
 
 	if resourceType.PreAction != nil {
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Processing '%s' PreAction", r.Desc())
-		}
+		logger.Debugf("Processing '%s' PreAction", r.Desc())
 		err := resourceType.PreAction(r)
 		if err != nil {
 			return err
 		}
 
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Finished '%s' PreAction", r.Desc())
-		}
+		logger.Debugf("Finished '%s' PreAction", r.Desc())
 	}
 
 	if resourceType.SetCurrentAttributesFunc != nil {
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Processing '%s' SetCurrentAttributes", r.Desc())
-		}
+		logger.Debugf("Processing '%s' SetCurrentAttributes", r.Desc())
 
 		err := resourceType.SetCurrentAttributesFunc(r)
 		if err != nil {
 			return err
 		}
 
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Finished '%s' SetCurrentAttributes", r.Desc())
-		}
+		logger.Debugf("Finished '%s' SetCurrentAttributes", r.Desc())
 	}
 
 	if resourceType.ShowDifferences != nil {
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Processing '%s' ShowDifferences", r.Desc())
-		}
+		logger.Debugf("Processing '%s' ShowDifferences", r.Desc())
 
 		err := resourceType.ShowDifferences(r)
 		if err != nil {
 			return err
 		}
 
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Finished '%s' ShowDifferences", r.Desc())
-		}
+		logger.Debugf("Finished '%s' ShowDifferences", r.Desc())
 	}
 
 	if !r.different() {
 		// run action only if the attributes change.
-		if loglv.IsDebug() {
-			log.Printf("(Debug) There are not attributes to change '%s'", r.Desc())
-		}
+		logger.Debugf("There are not attributes to change '%s'", r.Desc())
 		return nil
 	}
 
-	if !r.App.DryRun || r.ResourceType.Name == "recipe" {
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Processing '%s' action: '%s'", r.Desc(), action)
-		}
+	if !r.App.DryRun || r.ResourceType.Name == "resource" {
+		logger.Debugf("Processing '%s' action: '%s'", r.Desc(), action)
 
 		err := actionFunc(r)
 		if err != nil {
 			return err
 		}
 
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Finished '%s' action: '%s'", r.Desc(), action)
-		}
+		logger.Debugf("Finished '%s' action: '%s'", r.Desc(), action)
 
 		r.Update()
 	}
@@ -452,9 +427,9 @@ func (r *Resource) runAction(action string) error {
 // different returns true if the resource's attributes different with current attributes.
 // see also DefaultShowDifferences
 func (r *Resource) different() bool {
-	if loglv.IsDebug() {
-		log.Printf("(Debug) Checking difference of '%s'", r.Desc())
-	}
+	logger := r.App.Logger
+
+	logger.Debugf("Checking difference of '%s'", r.Desc())
 
 	var keys []string
 	for key, _ := range r.CurrentAttributes {
@@ -463,14 +438,10 @@ func (r *Resource) different() bool {
 
 	sort.Strings(keys)
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) Checked keys are '%v'", keys)
-	}
+	logger.Debugf("Checked keys are '%v'", keys)
 
 	for _, key := range keys {
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Checking difference of the key '%s'", key)
-		}
+		logger.Debugf("Checking difference of the key '%s'", key)
 
 		currentValue := r.CurrentAttributes[key]
 		if comparable, ok := currentValue.(ComparableValue); ok {
@@ -490,9 +461,7 @@ func (r *Resource) different() bool {
 			}
 		}
 
-		if loglv.IsDebug() {
-			log.Printf("(Debug) Checking difference '%s' (currentAttr: '%v') => (attr: '%v')", key, currentValue, value)
-		}
+		logger.Debugf("Checking difference '%s' (currentAttr: '%v') => (attr: '%v')", key, currentValue, value)
 
 		if currentValue == nil || value == nil {
 			// ignore
@@ -545,6 +514,8 @@ func (r *Resource) CheckCommand(command string) bool {
 }
 
 func (r *Resource) RunCommand(command string) *backend.CommandResult {
+	logger := r.App.Logger
+
 	opt := &backend.CommandOption{
 		User: r.GetStringAttribute("user"),
 		Cwd:  r.GetStringAttribute("cwd"),
@@ -553,9 +524,7 @@ func (r *Resource) RunCommand(command string) *backend.CommandResult {
 	i := r.Infra()
 	command = i.BuildCommand(command, opt)
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) command: %s", command)
-	}
+	logger.Debugf("command: %s", command)
 
 	return i.RunCommand(command)
 }
@@ -599,11 +568,10 @@ func (r *Resource) IsDifferentFilesRecursively(from, to string) bool {
 }
 
 func (r *Resource) ShowContentDiff(from, to string) {
+	logger := r.App.Logger
 	diff := fmt.Sprintf("diff -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) diff: %s", diff)
-	}
+	logger.Debugf("diff: %s", diff)
 
 	stdout := r.RunCommand(diff).Stdout
 	// I intentionally doesn't use bufio.Scanner to prevent bufio.Scanner: token too long
@@ -619,21 +587,21 @@ func (r *Resource) ShowContentDiff(from, to string) {
 		line := string(linebytes)
 
 		if strings.HasPrefix(line, "+") {
-			log.Print(color.FgG(" %s", line))
+			logger.Info(color.FgG(" %s", line))
 		} else if strings.HasPrefix(line, "-") {
-			log.Print(color.FgR(" %s", line))
+			logger.Info(color.FgR(" %s", line))
 		} else {
-			log.Printf("%s", line)
+			logger.Infof("%s", line)
 		}
 	}
 }
 
 func (r *Resource) ShowContentDiffRecursively(from, to string) {
+	logger := r.App.Logger
+
 	diff := fmt.Sprintf("diff -r -u %s %s", util.ShellEscape(from), util.ShellEscape(to))
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) diff: %s", diff)
-	}
+	logger.Debugf("diff: %s", diff)
 
 	stdout := r.RunCommand(diff).Stdout
 	reader := bufio.NewReader(&stdout)
@@ -663,14 +631,14 @@ func (r *Resource) Infra() *infra.Infra {
 }
 
 func (r *Resource) Update() {
+	logger := r.App.Logger
+
 	if r.updated {
 		return
 	}
 
 	r.updated = true
-	if loglv.IsDebug() {
-		log.Printf("(Debug) Resource '%s' is updated.", r.Desc())
-	}
+	logger.Debugf("Resource '%s' is updated.", r.Desc())
 }
 
 func (r Resource) IsUpdated() bool {
@@ -678,6 +646,7 @@ func (r Resource) IsUpdated() bool {
 }
 
 func DefaultShowDifferences(r *Resource) error {
+	logger := r.App.Logger
 	// for constant order
 	var keys []string
 	for key, _ := range r.CurrentAttributes {
@@ -708,18 +677,12 @@ func DefaultShowDifferences(r *Resource) error {
 		if currentValue == nil || value == nil {
 			// ignore
 		} else if currentValue == nil && value != nil {
-			if loglv.IsInfo() {
-				log.Print(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
-			}
+			logger.Info(color.FgGB("%s: '%s' will be '%v'", r.Desc(), key, value))
 		} else if currentValue == value || value == nil {
 			// ignore. not change
-			if loglv.IsDebug() {
-				log.Printf("(Debug) %s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
-			}
+			logger.Debugf("%s: %s will not change (current value is '%v')", r.Desc(), key, currentValue)
 		} else {
-			if loglv.IsInfo() {
-				log.Print(color.FgGB("%s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
-			}
+			logger.Info(color.FgGB("%s: '%s' will change from '%v' to '%v'", r.Desc(), key, currentValue, value))
 		}
 	}
 

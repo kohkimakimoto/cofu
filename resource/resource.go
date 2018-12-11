@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-var Recipe = &cofu.ResourceType{
-	Name: "recipe",
+var Resource = &cofu.ResourceType{
+	Name: "resource",
 	Attributes: []cofu.Attribute{
 		&cofu.StringSliceAttribute{
 			Name:     "action",
@@ -20,20 +20,17 @@ var Recipe = &cofu.ResourceType{
 			DefaultName: true,
 			Required:    true,
 		},
-		&cofu.MapAttribute{
-			Name:    "variables",
-			Default: map[string]interface{}{},
-		},
 	},
-	PreAction:                recipePreAction,
-	SetCurrentAttributesFunc: recipeSetCurrentAttributes,
-	ShowDifferences:          recipeShowDifferences,
+	PreAction:                resourcePreAction,
+	SetCurrentAttributesFunc: resourceSetCurrentAttributes,
+	ShowDifferences:          resourceShowDifferences,
 	Actions: map[string]cofu.ResourceAction{
-		"run": recipeRunAction,
+		"run": resourceRunAction,
 	},
+	UseFallbackAttributes: true,
 }
 
-func recipePreAction(r *cofu.Resource) error {
+func resourcePreAction(r *cofu.Resource) error {
 	if r.CurrentAction == "run" {
 		r.Attributes["loaded"] = true
 	}
@@ -41,17 +38,17 @@ func recipePreAction(r *cofu.Resource) error {
 	return nil
 }
 
-func recipeSetCurrentAttributes(r *cofu.Resource) error {
+func resourceSetCurrentAttributes(r *cofu.Resource) error {
 	r.CurrentAttributes["loaded"] = false
 
 	return nil
 }
 
-func recipeShowDifferences(r *cofu.Resource) error {
+func resourceShowDifferences(r *cofu.Resource) error {
 	return nil
 }
 
-func recipeRunAction(r *cofu.Resource) error {
+func resourceRunAction(r *cofu.Resource) error {
 	path := r.GetStringAttribute("path")
 	if !filepath.IsAbs(path) {
 		current := cofu.CurrentDir(r.App.LState)
@@ -73,7 +70,7 @@ func recipeRunAction(r *cofu.Resource) error {
 	}
 
 	// load variables
-	variables := r.GetMapAttribute("variables")
+	variables := r.FallbackAttributes
 	if variables == nil {
 		variables = map[string]interface{}{}
 	}
@@ -81,12 +78,14 @@ func recipeRunAction(r *cofu.Resource) error {
 	app := cofu.NewApp()
 	defer app.Close()
 
-	app.LogLevel = r.App.LogLevel
+	app.Logger = r.App.Logger
 	app.DryRun = r.App.DryRun
 	app.ResourceTypes = r.App.ResourceTypes
 	app.Parent = r.App
 	app.Level = r.App.Level + 1
-	app.LogIndent = cofu.LogIndent(app.Level)
+	app.LogPrefix = cofu.GenLogIndent(app.Level)
+	app.Logger.SetPrefix(app.LogPrefix)
+
 	app.BuiltinRecipes = r.App.BuiltinRecipes
 
 	if err := app.Init(); err != nil {
@@ -115,5 +114,5 @@ func recipeRunAction(r *cofu.Resource) error {
 }
 
 var DefaultBuiltinRecipes = map[string]string{
-	"testing": `print("testing!")`,
+	//"testing": `print("hello "..var.name)`,
 }

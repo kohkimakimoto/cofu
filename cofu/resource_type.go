@@ -2,9 +2,7 @@ package cofu
 
 import (
 	"fmt"
-	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
-	"log"
 )
 
 type ResourceType struct {
@@ -14,6 +12,7 @@ type ResourceType struct {
 	SetCurrentAttributesFunc ResourceAction
 	Actions                  map[string]ResourceAction
 	ShowDifferences          ResourceAction
+	UseFallbackAttributes    bool
 	app                      *App
 }
 
@@ -50,33 +49,19 @@ func (resourceType *ResourceType) registerResource(L *lua.LState, name string) *
 
 	r := NewResource(name, resourceType, app)
 
-	if loglv.IsDebug() {
-		log.Printf("(Debug) registering resource '%s'", r.Desc())
-	}
-
 	// set default attributes
 	for _, definedAttribute := range resourceType.Attributes {
 		if definedAttribute.HasDefault() {
-			if loglv.IsDebug() {
-				log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), definedAttribute.GetDefault())
-			}
-
 			r.Attributes[definedAttribute.GetName()] = definedAttribute.GetDefault()
 		}
 
 		switch a := definedAttribute.(type) {
 		case *StringAttribute:
 			if a.IsDefaultName() {
-				if loglv.IsDebug() {
-					log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
-				}
 				r.Attributes[definedAttribute.GetName()] = r.Name
 			}
 		case *StringSliceAttribute:
 			if a.IsDefaultName() {
-				if loglv.IsDebug() {
-					log.Printf("(Debug) Set default: %s = %s", definedAttribute.GetName(), r.Name)
-				}
 				r.Attributes[definedAttribute.GetName()] = r.Name
 			}
 		}
@@ -107,12 +92,20 @@ func updateResource(r *Resource, attributeName string, value lua.LValue) {
 		}
 	}
 
+	var goValue interface{}
 	if attribute == nil {
-		panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
+		if r.ResourceType.UseFallbackAttributes {
+			goValue = toGoValue(value)
+			r.FallbackAttributes[attributeName] = goValue
+		} else {
+			panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
+		}
+	} else {
+		goValue = attribute.ToGoValue(value)
 	}
 
-	r.AttributesLValues[attribute.GetName()] = value
-	r.Attributes[attribute.GetName()] = attribute.ToGoValue(value)
+	r.AttributesLValues[attributeName] = value
+	r.Attributes[attributeName] = goValue
 }
 
 func setupResource(r *Resource, attributes *lua.LTable) {

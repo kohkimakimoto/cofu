@@ -2,8 +2,6 @@ package resource
 
 import (
 	"github.com/kohkimakimoto/cofu/cofu"
-	"github.com/kohkimakimoto/loglv"
-	"log"
 )
 
 var Execute = &cofu.ResourceType{
@@ -42,11 +40,10 @@ func executeSetCurrentAttributes(r *cofu.Resource) error {
 }
 
 func executeRunAction(r *cofu.Resource) error {
+	logger := r.App.Logger
 	ret := r.MustRunCommand(r.GetStringAttribute("command"))
 
-	if loglv.IsDebug() {
-		log.Printf("%s\n", ret.Combined.String())
-	}
+	logger.Debugf("%s\n", ret.Combined.String())
 
 	return nil
 }
