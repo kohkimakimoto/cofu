@@ -225,7 +225,13 @@ func (app *App) DequeueDelayedNotification() *Notification {
 	return n
 }
 
-func (app *App) Run() error {
+func (app *App) Run() (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("%v",e)
+		}
+	}()
+
 	logger := app.Logger
 	if len(app.Resources) == 0 {
 		// not found available resources.

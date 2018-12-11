@@ -19,6 +19,7 @@ func main() {
 func realMain() (status int) {
 	defer func() {
 		if err := recover(); err != nil {
+			//fmt.Fprint(os.Stderr, color.FgRB("runtime panic\n"))
 			printError(err)
 			status = 1
 		}
@@ -158,6 +159,6 @@ Options:
 }
 
 func printError(err interface{}) {
-	fmt.Fprintf(os.Stderr, color.FgRB(cofu.Name+" aborted!\n"))
+	fmt.Fprintf(os.Stderr, color.FgRB(cofu.Name+" aborted! "))
 	fmt.Fprintf(os.Stderr, color.FgRB("%v\n", err))
 }
