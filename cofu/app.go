@@ -82,7 +82,7 @@ func (app *App) Init() error {
 	ud.Value = app
 
 	app.LState.SetGlobal(LUA_APP_KEY, ud)
-	app.LState.SetGlobal("var", toLValue( app.LState, app.variable))
+	app.LState.SetGlobal("var", toLValue(app.LState, app.variable))
 
 	return nil
 }

@@ -88,9 +88,6 @@ Options:
 		flag.CommandLine.Parse(os.Args[indexOfScript+1:])
 	}
 
-
-
-
 	// setup the cofu app.
 	app := cofu.NewApp()
 	defer app.Close()
@@ -138,7 +135,6 @@ Options:
 		printError(err)
 		status = 1
 	}
-
 
 	if recipeFile != "" {
 		if err := app.LoadRecipeFile(recipeFile); err != nil {
