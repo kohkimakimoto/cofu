@@ -12,6 +12,7 @@ type ResourceType struct {
 	SetCurrentAttributesFunc ResourceAction
 	Actions                  map[string]ResourceAction
 	ShowDifferences          ResourceAction
+	UseFallbackAttributes    bool
 	app                      *App
 }
 
@@ -91,12 +92,20 @@ func updateResource(r *Resource, attributeName string, value lua.LValue) {
 		}
 	}
 
+	var goValue interface{}
 	if attribute == nil {
-		panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
+		if r.ResourceType.UseFallbackAttributes {
+			goValue = toGoValue(value)
+			r.FallbackAttributes[attributeName] = goValue
+		} else {
+			panic(fmt.Sprintf("Invalid attribute name '%s'.", attributeName))
+		}
+	} else {
+		goValue = attribute.ToGoValue(value)
 	}
 
-	r.AttributesLValues[attribute.GetName()] = value
-	r.Attributes[attribute.GetName()] = attribute.ToGoValue(value)
+	r.AttributesLValues[attributeName] = value
+	r.Attributes[attributeName] = goValue
 }
 
 func setupResource(r *Resource, attributes *lua.LTable) {

@@ -228,7 +228,7 @@ func (app *App) DequeueDelayedNotification() *Notification {
 func (app *App) Run() (err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			err = fmt.Errorf("%v",e)
+			err = fmt.Errorf("%v", e)
 		}
 	}()
 

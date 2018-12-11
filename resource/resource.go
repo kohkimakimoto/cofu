@@ -20,10 +20,6 @@ var Resource = &cofu.ResourceType{
 			DefaultName: true,
 			Required:    true,
 		},
-		&cofu.MapAttribute{
-			Name:    "variables",
-			Default: map[string]interface{}{},
-		},
 	},
 	PreAction:                resourcePreAction,
 	SetCurrentAttributesFunc: resourceSetCurrentAttributes,
@@ -31,6 +27,7 @@ var Resource = &cofu.ResourceType{
 	Actions: map[string]cofu.ResourceAction{
 		"run": resourceRunAction,
 	},
+	UseFallbackAttributes: true,
 }
 
 func resourcePreAction(r *cofu.Resource) error {
@@ -73,7 +70,7 @@ func resourceRunAction(r *cofu.Resource) error {
 	}
 
 	// load variables
-	variables := r.GetMapAttribute("variables")
+	variables := r.FallbackAttributes
 	if variables == nil {
 		variables = map[string]interface{}{}
 	}
@@ -115,5 +112,5 @@ func resourceRunAction(r *cofu.Resource) error {
 }
 
 var DefaultBuiltinRecipes = map[string]string{
-	"testing": `print("testing!")`,
+	//"testing": `print("hello "..var.name)`,
 }

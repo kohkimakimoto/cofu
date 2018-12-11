@@ -12,14 +12,25 @@ The difference between `resource` and `include_recipe` is that
 ## Attributes
 
 * `path` (string) (default: name of resource):
-* `variables` (table):
+
+And you can set arbitrary attributes to path variables recipe.
 
 ## Example
 
 ```lua
-recipe "cron" {
-  variables = {
-
-  }
+recipe "example" {
+    variable1 = "aaa",
+    variable2 = "bbb",
 }
+```
+
+example.lua
+
+```lua
+execute "ls -la"
+
+
+-- you can use varilabes
+print(var.variable1)
+print(var.variable2) 
 ```
