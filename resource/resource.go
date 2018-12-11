@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-var Recipe = &cofu.ResourceType{
-	Name: "recipe",
+var Resource = &cofu.ResourceType{
+	Name: "resource",
 	Attributes: []cofu.Attribute{
 		&cofu.StringSliceAttribute{
 			Name:     "action",
@@ -25,15 +25,15 @@ var Recipe = &cofu.ResourceType{
 			Default: map[string]interface{}{},
 		},
 	},
-	PreAction:                recipePreAction,
-	SetCurrentAttributesFunc: recipeSetCurrentAttributes,
-	ShowDifferences:          recipeShowDifferences,
+	PreAction:                resourcePreAction,
+	SetCurrentAttributesFunc: resourceSetCurrentAttributes,
+	ShowDifferences:          resourceShowDifferences,
 	Actions: map[string]cofu.ResourceAction{
-		"run": recipeRunAction,
+		"run": resourceRunAction,
 	},
 }
 
-func recipePreAction(r *cofu.Resource) error {
+func resourcePreAction(r *cofu.Resource) error {
 	if r.CurrentAction == "run" {
 		r.Attributes["loaded"] = true
 	}
@@ -41,17 +41,17 @@ func recipePreAction(r *cofu.Resource) error {
 	return nil
 }
 
-func recipeSetCurrentAttributes(r *cofu.Resource) error {
+func resourceSetCurrentAttributes(r *cofu.Resource) error {
 	r.CurrentAttributes["loaded"] = false
 
 	return nil
 }
 
-func recipeShowDifferences(r *cofu.Resource) error {
+func resourceShowDifferences(r *cofu.Resource) error {
 	return nil
 }
 
-func recipeRunAction(r *cofu.Resource) error {
+func resourceRunAction(r *cofu.Resource) error {
 	path := r.GetStringAttribute("path")
 	if !filepath.IsAbs(path) {
 		current := cofu.CurrentDir(r.App.LState)
