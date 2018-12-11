@@ -81,7 +81,7 @@ func recipeRunAction(r *cofu.Resource) error {
 	app := cofu.NewApp()
 	defer app.Close()
 
-	app.LogLevel = r.App.LogLevel
+	app.Logger = r.App.Logger
 	app.DryRun = r.App.DryRun
 	app.ResourceTypes = r.App.ResourceTypes
 	app.Parent = r.App

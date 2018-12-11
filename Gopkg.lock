@@ -74,6 +74,17 @@
   revision = "4f44f49b070c120dfd2c9e41a7d07c2eb7817a04"
 
 [[projects]]
+  digest = "1:01eb0269028d3c2e21b5b6cd9b1ba81bc4170ab293fcffa84e3aa3a6138a92e8"
+  name = "github.com/labstack/gommon"
+  packages = [
+    "color",
+    "log",
+  ]
+  pruneopts = "UT"
+  revision = "7fd9f68ece0bcb1a905fac8f1549f0083f71c51b"
+  version = "v0.2.8"
+
+[[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -99,14 +110,35 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ed5a2784ba6c5b45c11fbc0652aefb98b0d64f63a6a448d1c91f81f1087cdf9e"
+  digest = "1:c906e581978ce94ad169b827d3bfec29a1b809f643d058e862a9c7e449f57e0e"
+  name = "github.com/otm/gluash"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e145c563986f0b91f740a758a84bca46c163aec7"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1258c3eae5f49074cb0a9b65765a9b413ba3dd74010b51d64fb06cb894721f3f"
   name = "github.com/tengattack/gluacrypto"
-  packages = [
-    ".",
-    "crypto",
-  ]
+  packages = ["crypto"]
   pruneopts = "UT"
   revision = "b329f57d953061c57bc0174bdbd8f121f13a5dbc"
+
+[[projects]]
+  digest = "1:c468422f334a6b46a19448ad59aaffdfc0a36b08fdcc1c749a0b29b6453d7e59"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:268b8bce0064e8c057d7b913605459f9a26dcab864c0886a56d196540fbf003f"
+  name = "github.com/valyala/fasttemplate"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
 
 [[projects]]
   digest = "1:d9fe1f86ae3cc0842ef73addb881c82067ca760bf002f7adde9a8c8e6ea54627"
@@ -139,30 +171,30 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
+  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
-  digest = "1:f343f077a5b0bc3a3788b3a04e24dd417e3e25b2acb529c413e212d2c42416ef"
+  digest = "1:268575c4d9e27391ede5e3559c7f41a15dbf108678672afade864e08d6c34574"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "0cf1ed9e522b7dbb416f080a5c8003de9b702bf4"
+  revision = "2a47403f2ae58167c4d75973960ccc62b28cb0d8"
 
 [[projects]]
-  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [[projects]]
   branch = "master"
@@ -184,8 +216,10 @@
     "github.com/kohkimakimoto/gluatemplate",
     "github.com/kohkimakimoto/gluayaml",
     "github.com/kohkimakimoto/loglv",
+    "github.com/labstack/gommon/log",
     "github.com/mitchellh/mapstructure",
-    "github.com/tengattack/gluacrypto",
+    "github.com/otm/gluash",
+    "github.com/tengattack/gluacrypto/crypto",
     "github.com/yookoala/realpath",
     "github.com/yuin/gluare",
     "github.com/yuin/gopher-lua",

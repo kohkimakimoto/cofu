@@ -8,12 +8,11 @@ import (
 	"github.com/kohkimakimoto/gluaquestion"
 	"github.com/kohkimakimoto/gluatemplate"
 	"github.com/kohkimakimoto/gluayaml"
-	"github.com/kohkimakimoto/loglv"
+	"github.com/otm/gluash"
 	gluacrypto "github.com/tengattack/gluacrypto/crypto"
 	"github.com/yuin/gluare"
 	"github.com/yuin/gopher-lua"
 	gluajson "layeh.com/gopher-json"
-	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -46,6 +45,7 @@ func openLibs(app *App) {
 	L.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{}).Loader)
 	L.PreloadModule("re", gluare.Loader)
 	L.PreloadModule("crypto", gluacrypto.Loader)
+	L.PreloadModule("sh", gluash.Loader)
 }
 
 func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
@@ -174,13 +174,7 @@ func commandResultCombined(L *lua.LState) int {
 }
 
 func fnRunCommand(L *lua.LState) int {
-	// TODO
 	command := L.CheckString(1)
-
-	if loglv.IsDebug() {
-		log.Printf("(Debug) command: %s", command)
-	}
-
 	app, err := GetApp(L)
 	if err != nil {
 		L.RaiseError(err.Error())

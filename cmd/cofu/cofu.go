@@ -7,6 +7,8 @@ import (
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
+	"github.com/kohkimakimoto/cofu/support/logutil"
+	"github.com/labstack/gommon/log"
 	"os"
 )
 
@@ -48,7 +50,7 @@ version ` + cofu.Version + ` (` + cofu.CommitHash + `)
 
 Options:
   -e 'recipe'                Execute 'recipe'
-  -l, -log-level=LEVEL       Log level (quiet|error|warning|info|debug). Default is 'info'.
+  -l, -log-level=LEVEL       Log level (error|warn|info|debug). Default is 'info'.
   -h, -help                  Show help
   -n, -dry-run               Runs dry-run mode
   -v, -version               Print the version
@@ -94,18 +96,25 @@ Options:
 		fatihColor.NoColor = true
 	}
 
-	// finished parsing flags, start initializing app.
+	// setup the cofu app.
 	app := cofu.NewApp()
 	defer app.Close()
 
-	app.LogLevel = optLogLevel
-	app.DryRun = optDryRun
-	app.ResourceTypes = resource.ResourceTypes
-	app.BuiltinRecipes = resource.DefaultBuiltinRecipes
-	if err := app.Init(); err != nil {
+	// setup logger
+	lv, err := logutil.LoglvlFromString(optLogLevel)
+	if err != nil {
 		printError(err)
 		status = 1
 	}
+
+	logger := log.New("cofu")
+	logger.SetLevel(lv)
+	logger.SetHeader(`${level}`)
+	app.Logger = logger
+
+	app.DryRun = optDryRun
+	app.ResourceTypes = resource.ResourceTypes
+	app.BuiltinRecipes = resource.DefaultBuiltinRecipes
 
 	if optVarJsonFile != "" {
 		if err := app.LoadVariableFromJSONFile(optVarJsonFile); err != nil {
@@ -120,6 +129,13 @@ Options:
 			return 1
 		}
 	}
+
+	// initialize app
+	if err := app.Init(); err != nil {
+		printError(err)
+		status = 1
+	}
+
 
 	if recipeFile != "" {
 		if err := app.LoadRecipeFile(recipeFile); err != nil {
