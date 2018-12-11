@@ -13,7 +13,7 @@ The difference between `resource` and `include_recipe` is that
 
 * `path` (string) (default: name of resource):
 
-And you can set arbitrary attributes to path variables recipe.
+And you can set arbitrary attributes to pass variables to a recipe.
 
 ## Example
 
