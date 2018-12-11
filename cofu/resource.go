@@ -406,7 +406,7 @@ func (r *Resource) runAction(action string) error {
 		return nil
 	}
 
-	if !r.App.DryRun || r.ResourceType.Name == "recipe" {
+	if !r.App.DryRun || r.ResourceType.Name == "resource" {
 		logger.Debugf("Processing '%s' action: '%s'", r.Desc(), action)
 
 		err := actionFunc(r)

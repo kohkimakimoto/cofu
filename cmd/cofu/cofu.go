@@ -88,13 +88,8 @@ Options:
 		flag.CommandLine.Parse(os.Args[indexOfScript+1:])
 	}
 
-	if optColor {
-		fatihColor.NoColor = false
-	}
 
-	if optNoColor {
-		fatihColor.NoColor = true
-	}
+
 
 	// setup the cofu app.
 	app := cofu.NewApp()
@@ -110,6 +105,14 @@ Options:
 	logger := log.New("cofu")
 	logger.SetLevel(lv)
 	logger.SetHeader(`${level}`)
+	if optColor {
+		fatihColor.NoColor = false
+		logger.EnableColor()
+	}
+	if optNoColor {
+		fatihColor.NoColor = true
+		logger.DisableColor()
+	}
 	app.Logger = logger
 
 	app.DryRun = optDryRun

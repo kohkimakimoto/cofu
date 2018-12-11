@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/support/gluamapper"
-	"github.com/kohkimakimoto/loglv"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -56,6 +54,7 @@ var Template = &cofu.ResourceType{
 }
 
 func templatePreAction(r *cofu.Resource) error {
+	logger := r.App.Logger
 	var templateContent string
 
 	if r.Attributes["content"] != nil {
@@ -71,9 +70,7 @@ func templatePreAction(r *cofu.Resource) error {
 				ps := p + ext
 				r.Attributes["source"] = ps
 				if _, err := os.Stat(ps); err == nil {
-					if loglv.IsDebug() {
-						log.Printf("(Debug) '%s' is used as template file", ps)
-					}
+					logger.Debugf("'%s' is used as template file", ps)
 					break
 				}
 			}

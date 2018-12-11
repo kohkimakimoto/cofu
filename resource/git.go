@@ -5,8 +5,6 @@ import (
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/infra/backend"
 	"github.com/kohkimakimoto/cofu/infra/util"
-	"github.com/kohkimakimoto/loglv"
-	"log"
 	"strings"
 )
 
@@ -151,10 +149,6 @@ func gitRunCommandInRepo(r *cofu.Resource, command string) *backend.CommandResul
 
 	i := r.Infra()
 	command = i.BuildCommand(command, opt)
-
-	if loglv.IsDebug() {
-		log.Printf("(Debug) command: %s", command)
-	}
 
 	return i.RunCommand(command)
 }
