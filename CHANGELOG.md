@@ -1,3 +1,10 @@
+## v0.10.0
+
+* Support `resource`
+* Change output log format.
+* Modify internal APIs. 
+
+
 ## v0.8.0
 
 * Support debian and ubuntu (experimental)
