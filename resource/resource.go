@@ -88,8 +88,6 @@ func resourceRunAction(r *cofu.Resource) error {
 
 	app.BuiltinRecipes = r.App.BuiltinRecipes
 
-
-
 	if err := app.Init(); err != nil {
 		return err
 	}
