@@ -32,7 +32,7 @@ type App struct {
 	variable             map[string]interface{}
 	Parent               *App
 	Level                int
-	LogIndent            string
+	LogPrefix            string
 	BuiltinRecipes       map[string]string
 }
 
@@ -54,7 +54,7 @@ func NewApp() *App {
 		},
 		Parent:         nil,
 		Level:          0,
-		LogIndent:      LogIndent(0),
+		LogPrefix:      GenLogIndent(0),
 		BuiltinRecipes: map[string]string{},
 	}
 }
@@ -123,7 +123,7 @@ func (app *App) Close() {
 	}
 
 	if app.Parent != nil {
-		log.SetPrefix(app.Parent.LogIndent)
+		app.Logger.SetPrefix(app.Parent.LogPrefix)
 	}
 }
 
@@ -422,6 +422,6 @@ func toLValue(L *lua.LState, value interface{}) lua.LValue {
 	return lua.LNil
 }
 
-func LogIndent(level int) string {
+func GenLogIndent(level int) string {
 	return fmt.Sprintf("%s", strings.Repeat("  ", level))
 }

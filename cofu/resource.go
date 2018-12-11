@@ -41,7 +41,7 @@ func NewResource(name string, resourceType *ResourceType, app *App) *Resource {
 			panic(err2)
 		}
 		basepath = wd
-		app.Logger.Debugf("(Debug) Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
+		app.Logger.Debugf("Couldn't get the resource basepath in the lua state (err: %v). so it uses current working directory %s", err, basepath)
 	}
 
 	return &Resource{
@@ -267,14 +267,14 @@ func (r *Resource) Run(specificAction string) error {
 		}
 	}
 
-	logger.Debugf("(Debug) Resource basepath: %s", r.Basepath)
+	logger.Debugf("Resource basepath: %s", r.Basepath)
 
 	err := os.Chdir(r.Basepath)
 	if err != nil {
 		return err
 	}
 
-	logger.Debugf("(Debug) Changed current directory: %s", r.Basepath)
+	logger.Debugf("Changed current directory: %s", r.Basepath)
 
 	if r.doNotRunBecauseOfOnlyIf() {
 		logger.Info("Execution skipped because of only_if attribute.")

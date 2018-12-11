@@ -83,8 +83,12 @@ func resourceRunAction(r *cofu.Resource) error {
 	app.ResourceTypes = r.App.ResourceTypes
 	app.Parent = r.App
 	app.Level = r.App.Level + 1
-	app.LogIndent = cofu.LogIndent(app.Level)
+	app.LogPrefix = cofu.GenLogIndent(app.Level)
+	app.Logger.SetPrefix(app.LogPrefix)
+
 	app.BuiltinRecipes = r.App.BuiltinRecipes
+
+
 
 	if err := app.Init(); err != nil {
 		return err

@@ -1,6 +1,6 @@
 # resource resource
 
-`resource` loads an another recipe as a resource. 
+`resource` is a special function to load an another recipe as a resource. 
 The difference between `resource` and `include_recipe` is that
 `resource` evaluates a recipe file in the independent context, whereas
 `include_recipe` evaluates a recipe file in the same context that loads it.
@@ -18,7 +18,7 @@ And you can set arbitrary attributes to path variables recipe.
 ## Example
 
 ```lua
-recipe "example" {
+resource "example" {
     variable1 = "aaa",
     variable2 = "bbb",
 }
@@ -30,7 +30,7 @@ example.lua
 execute "ls -la"
 
 
--- you can use varilabes
+-- you can use varilabes in the recipe.
 print(var.variable1)
 print(var.variable2) 
 ```

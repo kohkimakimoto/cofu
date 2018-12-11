@@ -102,7 +102,8 @@ Options:
 
 	logger := log.New("cofu")
 	logger.SetLevel(lv)
-	logger.SetHeader(`${level}`)
+	logger.SetPrefix("")
+	logger.SetHeader(`${level}${prefix}`)
 	if optColor {
 		fatihColor.NoColor = false
 		logger.EnableColor()
