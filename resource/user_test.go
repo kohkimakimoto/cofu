@@ -3,7 +3,6 @@ package resource
 import (
 	"bytes"
 	"github.com/kohkimakimoto/cofu/cofu"
-	"log"
 	"regexp"
 	"testing"
 )
@@ -21,7 +20,7 @@ func TestUserAdd(t *testing.T) {
 
 	// override output
 	stdout := new(bytes.Buffer)
-	log.SetOutput(stdout)
+	app.Logger.SetOutput(stdout)
 
 	if err := app.LoadRecipe(`
 user "test_user" {

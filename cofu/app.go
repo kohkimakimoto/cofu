@@ -39,9 +39,13 @@ type App struct {
 const LUA_APP_KEY = "*__COFU_APP__"
 
 func NewApp() *App {
+	defaultLogger := log.New("cofu")
+	defaultLogger.SetPrefix("")
+	defaultLogger.SetHeader(`${level}${prefix}`)
+
 	return &App{
 		LState:               lua.NewState(),
-		Logger:               log.New("cofu"),
+		Logger:               defaultLogger,
 		ResourceTypesMap:     map[string]*ResourceType{},
 		Resources:            []*Resource{},
 		DelayedNotifications: []*Notification{},
