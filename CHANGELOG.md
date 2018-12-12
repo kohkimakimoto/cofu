@@ -1,3 +1,7 @@
+## v0.11.0
+
+* Modify internal APIs.
+
 ## v0.10.0
 
 * Support `resource`
