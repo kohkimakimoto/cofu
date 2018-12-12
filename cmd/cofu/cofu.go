@@ -114,7 +114,6 @@ Options:
 	}
 	app.Logger = logger
 
-	app.DryRun = optDryRun
 	app.ResourceTypes = resource.ResourceTypes
 	app.BuiltinRecipes = resource.DefaultBuiltinRecipes
 
@@ -151,7 +150,7 @@ Options:
 	}
 
 	// run converging phase.
-	if err := app.Run(); err != nil {
+	if err := app.Run(optDryRun); err != nil {
 		printError(err)
 		return 1
 	}

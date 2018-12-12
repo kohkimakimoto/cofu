@@ -21,12 +21,12 @@ import (
 type App struct {
 	LState               *lua.LState
 	Logger               Logger
-	DryRun               bool
 	ResourceTypes        []*ResourceType
 	ResourceTypesMap     map[string]*ResourceType
 	Resources            []*Resource
 	DelayedNotifications []*Notification
 	Infra                *infra.Infra
+	DryRun               bool
 	Tmpdir               string
 	Tmpfiles             []string
 	variable             map[string]interface{}
@@ -73,13 +73,6 @@ func (app *App) Init() error {
 
 	// load lua libraries.
 	openLibs(app)
-
-	// create tmp directory
-	if _, err := os.Stat(app.Tmpdir); os.IsNotExist(err) {
-		defaultUmask := syscall.Umask(0)
-		os.MkdirAll(app.Tmpdir, 0777)
-		syscall.Umask(defaultUmask)
-	}
 
 	// register app into the LState
 	ud := app.LState.NewUserData()
@@ -229,14 +222,23 @@ func (app *App) DequeueDelayedNotification() *Notification {
 	return n
 }
 
-func (app *App) Run() (err error) {
+func (app *App) Run(dryRun bool) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("%v", e)
 		}
 	}()
-
 	logger := app.Logger
+
+	app.DryRun = dryRun
+
+	// create tmp directory
+	if _, err := os.Stat(app.Tmpdir); os.IsNotExist(err) {
+		defaultUmask := syscall.Umask(0)
+		os.MkdirAll(app.Tmpdir, 0777)
+		syscall.Umask(defaultUmask)
+	}
+
 	if len(app.Resources) == 0 {
 		// not found available resources.
 		return nil

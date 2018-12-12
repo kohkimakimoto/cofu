@@ -79,9 +79,9 @@ func resourceRunAction(r *cofu.Resource) error {
 	defer app.Close()
 
 	app.Logger = r.App.Logger
-	app.DryRun = r.App.DryRun
 	app.ResourceTypes = r.App.ResourceTypes
 	app.Parent = r.App
+	app.Tmpdir = r.App.Tmpdir
 	app.Level = r.App.Level + 1
 	app.LogPrefix = cofu.GenLogIndent(app.Level)
 	app.Logger.SetPrefix(app.LogPrefix)
@@ -106,7 +106,7 @@ func resourceRunAction(r *cofu.Resource) error {
 		}
 	}
 
-	if err := app.Run(); err != nil {
+	if err := app.Run(app.DryRun); err != nil {
 		return err
 	}
 
