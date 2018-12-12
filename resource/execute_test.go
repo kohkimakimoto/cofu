@@ -27,7 +27,7 @@ execute "echo hogehoge"
 	`); err != nil {
 		t.Error(err)
 	}
-	if err := app.Run(); err != nil {
+	if err := app.Run(true); err != nil {
 		t.Error(err)
 	}
 

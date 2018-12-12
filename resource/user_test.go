@@ -31,7 +31,7 @@ user "test_user" {
 	`); err != nil {
 		t.Error(err)
 	}
-	if err := app.Run(); err != nil {
+	if err := app.Run(true); err != nil {
 		t.Error(err)
 	}
 

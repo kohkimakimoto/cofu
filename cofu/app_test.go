@@ -13,7 +13,7 @@ func TestAppJustRun(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := app.Run(); err != nil {
+	if err := app.Run(true); err != nil {
 		t.Error(err)
 	}
 }
