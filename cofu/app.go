@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	fatihColor "github.com/fatih/color"
 	"github.com/kohkimakimoto/cofu/infra"
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
@@ -430,4 +431,8 @@ func toLValue(L *lua.LState, value interface{}) lua.LValue {
 
 func GenLogIndent(level int) string {
 	return fmt.Sprintf("%s", strings.Repeat("  ", level))
+}
+
+func SetNoColor(b bool) {
+	fatihColor.NoColor = false
 }

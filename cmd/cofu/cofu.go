@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	fatihColor "github.com/fatih/color"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
@@ -105,11 +104,11 @@ Options:
 	logger.SetPrefix("")
 	logger.SetHeader(`${level}${prefix}`)
 	if optColor {
-		fatihColor.NoColor = false
+		cofu.SetNoColor(false)
 		logger.EnableColor()
 	}
 	if optNoColor {
-		fatihColor.NoColor = true
+		cofu.SetNoColor(true)
 		logger.DisableColor()
 	}
 	app.Logger = logger
