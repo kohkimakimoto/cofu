@@ -5,6 +5,8 @@ The difference between `resource` and `include_recipe` is that
 `resource` evaluates a recipe file in the independent context, whereas
 `include_recipe` evaluates a recipe file in the same context that loads it.
 
+`resource` also loads a recipe under the `resources` directory if it exists.
+
 ## Actions
 
 * `run`: Run the recipe (default).
@@ -24,7 +26,7 @@ resource "example" {
 }
 ```
 
-example.lua
+example.lua ( or `resources/example.lua`)
 
 ```lua
 software_package "httpd"
@@ -33,7 +35,7 @@ template "/etc/httpd/conf/httpd.conf" {
 
 }
 
--- you can use varilabes in the recipe.
+-- you can use varilabes passed with `resource`. They are not global variables passed by `-var` or `-var-file` options.
 print(var.variable1)
 print(var.variable2) 
 ```

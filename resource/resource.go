@@ -50,15 +50,22 @@ func resourceShowDifferences(r *cofu.Resource) error {
 
 func resourceRunAction(r *cofu.Resource) error {
 	path := r.GetStringAttribute("path")
-	if !filepath.IsAbs(path) {
-		current := cofu.CurrentDir(r.App.LState)
-		path = filepath.Join(current, path)
-	}
-
 	if !strings.HasSuffix(path, ".lua") {
 		path += ".lua"
 	}
 
+	// If the path is relative, try to find under the 'resources'
+	if !filepath.IsAbs(path) {
+		one := filepath.Join(r.Basepath, "resources", path)
+		if _, err := os.Stat(one); err == nil {
+			path = one
+		} else {
+			// or under the current directory.
+			current := cofu.CurrentDir(r.App.LState)
+			path = filepath.Join(current, path)
+		}
+	}
+	
 	var builtInRecipe string
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// not found. try to find builtin recipe
@@ -83,9 +90,7 @@ func resourceRunAction(r *cofu.Resource) error {
 	app.Parent = r.App
 	app.Tmpdir = r.App.Tmpdir
 	app.Level = r.App.Level + 1
-	app.LogPrefix = cofu.GenLogIndent(app.Level)
-	app.Logger.SetPrefix(app.LogPrefix)
-
+	app.Logger.SetHeader(r.App.LogHeaderWitoutIndent + cofu.GenLogIndent(app.Level))
 	app.BuiltinRecipes = r.App.BuiltinRecipes
 
 	if err := app.Init(); err != nil {
