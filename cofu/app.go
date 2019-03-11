@@ -40,7 +40,7 @@ type App struct {
 const LUA_APP_KEY = "*__COFU_APP__"
 
 func NewApp() *App {
-	defaultLogHeader := `${level}${prefix}`
+	defaultLogHeader := `${prefix} ${level}`
 	defaultLogger := log.New("cofu")
 	defaultLogger.SetPrefix("")
 	defaultLogger.SetHeader(defaultLogHeader)
