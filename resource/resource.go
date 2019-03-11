@@ -65,7 +65,7 @@ func resourceRunAction(r *cofu.Resource) error {
 			path = filepath.Join(current, path)
 		}
 	}
-	
+
 	var builtInRecipe string
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// not found. try to find builtin recipe
