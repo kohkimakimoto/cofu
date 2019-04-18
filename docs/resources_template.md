@@ -14,7 +14,7 @@
 
 * `content` (string):
 
-* `source` (string): Path to the file source. This is automatically configured by `path` attribute at default. For example, If the `path` is `/etc/php.ini`, `source` is `templates/etc/php.ini` or `templates/etc/php.ini.tmpl` that is a relative path from the directory which includes this recipe.
+* `source` (string): Path to the file source. This is automatically configured by `path` attribute at default. For example, If the `path` is `/etc/php.ini`, `source` is `templates/etc/php.ini.tmpl` or `templates/etc/php.ini` or `files/etc/php.ini.tmpl` or `files/etc/php.ini` that is a relative path from the directory which includes this recipe.
 
 * `mode` (string):
 

@@ -32,11 +32,17 @@ test: ## Run all tests
 	@export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
 	@export DOCKER_IMAGE="kohkimakimoto/golang:debian8" && bash -c $(CURDIR)/test/test.sh
 
+.PHONY: installtools
+installtools: ## Install dev tools
+	GOPATH=$(CURDIR)/.go-packages && \
+      go get -u github.com/golang/dep/cmd/dep && \
+      go get -u github.com/mitchellh/gox && \
+      go get -u github.com/axw/gocov/gocov && \
+      go get -u gopkg.in/matm/v1/gocov-html
+
 .PHONY:deps
 deps: ## Install dependences.
-	go get -u github.com/golang/dep/cmd/dep
-	go get -u github.com/mitchellh/gox
-	dep ensure
+	PATH=$(CURDIR)/.go-packages/bin:${PATH} && dep ensure
 
 .PHONY:resetdeps
 resetdeps: ## reset dependences.

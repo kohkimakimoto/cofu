@@ -2,6 +2,7 @@ package resource
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/support/gluamapper"
 	"github.com/yuin/gopher-lua"
@@ -63,16 +64,27 @@ func templatePreAction(r *cofu.Resource) error {
 		if r.Attributes["source"] == nil {
 			// try to load default source
 			p := r.GetStringAttribute("path")
-			//r.Attributes["source"] = filepath.Join(r.Basepath, "templates", p)
-			p = filepath.Join(r.Basepath, "templates", p)
 
-			for _, ext := range []string{".tmpl", ""} {
-				ps := p + ext
-				r.Attributes["source"] = ps
+			p1 := filepath.Join(r.Basepath, "templates", p)
+			p2 := filepath.Join(r.Basepath, "files", p)
+
+			paths := []string{
+				p1 + ".tmpl",
+				p1,
+				p2 + ".tmpl",
+				p2,
+			}
+
+			for _, ps := range paths {
 				if _, err := os.Stat(ps); err == nil {
 					logger.Debugf("'%s' is used as template file", ps)
+					r.Attributes["source"] = ps
 					break
 				}
+			}
+
+			if r.Attributes["source"] == nil {
+				return fmt.Errorf("not exists: %v", paths)
 			}
 		}
 

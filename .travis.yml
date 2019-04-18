@@ -4,11 +4,13 @@ services:
 language: go
 
 go:
-  - 1.8
+  - 1.12.x
 
 before_install:
+  - make installtools
   - make deps
 
 script:
   - make test
+  - make dev
 
