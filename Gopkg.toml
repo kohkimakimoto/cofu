@@ -26,12 +26,24 @@
 
 
 [[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.1"
+
+[[constraint]]
   branch = "master"
   name = "github.com/cjoudrey/gluahttp"
 
 [[constraint]]
   name = "github.com/fatih/color"
   version = "1.7.0"
+
+[[constraint]]
+  name = "github.com/gliderlabs/ssh"
+  version = "0.1.4"
+
+[[constraint]]
+  name = "github.com/kayac/go-katsubushi"
+  version = "1.5.4"
 
 [[constraint]]
   branch = "master"
@@ -68,6 +80,10 @@
 [[constraint]]
   branch = "master"
   name = "github.com/otm/gluash"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.1"
 
 [[constraint]]
   branch = "master"

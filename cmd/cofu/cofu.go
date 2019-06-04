@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kohkimakimoto/cofu/agent"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
@@ -25,8 +26,8 @@ func realMain() (status int) {
 	}()
 
 	// parse flags...
-	var optE, optLogLevel, optVarJson, optVarJsonFile string
-	var optVersion, optDryRun, optColor, optNoColor bool
+	var optE, optLogLevel, optVarJson, optVarJsonFile, optConfigFile string
+	var optVersion, optDryRun, optColor, optNoColor, optAgent bool
 
 	flag.StringVar(&optE, "e", "", "")
 	flag.StringVar(&optLogLevel, "l", "info", "")
@@ -42,6 +43,12 @@ func realMain() (status int) {
 	flag.BoolVar(&optColor, "color", false, "")
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
+	// agent options
+	flag.BoolVar(&optAgent, "a", false, "")
+	flag.BoolVar(&optAgent, "agent", false, "")
+	flag.StringVar(&optConfigFile, "c", "", "")
+	flag.StringVar(&optConfigFile, "config-file", "", "")
+
 	flag.Usage = func() {
 		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE]
 
@@ -56,6 +63,8 @@ Options:
   -v, -version               Print the version
   -color                     Force ANSI output
   -no-color                  Disable ANSI output
+  -a, -agent                 Runs cofu agent
+  -c, -config-file=FILE      Load agent config from the FILE
   -var=JSON                  JSON string to input variables.
   -var-file=JSON_FILE        JSON file to input variables.
 `)
@@ -65,6 +74,16 @@ Options:
 	if optVersion {
 		// show version
 		fmt.Println(cofu.Name + " version " + cofu.Version + " (" + cofu.CommitHash + ")")
+		return 0
+	}
+
+	if optAgent {
+		// run agent
+		if err := agent.Start(optConfigFile); err != nil {
+			printError(err)
+			return 1
+		}
+
 		return 0
 	}
 
