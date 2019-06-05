@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------
+# cofu-agent configuration
+# see https://github.com/kohkimakimoto/cofu
+# ---------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------
+# agent section
+#
+# The agent section defines global settings for cofu-agent process.
+# ---------------------------------------------------------------------
+[agent]
+# log_level
+log_level = "info"
+
+# addr
+addr = "0.0.0.0:2222"
+
+# authorized_keys_file
+#authorized_keys_file = "/etc/eazy/authorized_keys"
+
+# authorized_keys
+authorized_keys = []
+
+# host_key_file
+host_key_file = "/etc/cofu-agent/host_key"
+
+# sandboxes_directory
+sandboxes_directory = "/var/lib/cofu-agent/sandboxes"
+
+# hot_reload
+hot_reload = true
+
+# disable_local_auth. This config is for development purpose. You should not set true in the production environment.
+disable_local_auth = false
+
+
+# ---------------------------------------------------------------------
+# tasks.x section
+#
+# The tasks.x section defines a task. The tasks in cofu-agent are
+# configuration unit for executing commands in a specific environment.
+# `x` is the name of the task.
+# ---------------------------------------------------------------------
+
+# plan is a task for checking effect of your provisioning
+[tasks.plan]
+sandbox = true
+sandbox_source = "github.com/kohkimakimoto/cofu/examples/cofu-repository-empty"
+keep_sandboxes = 5
+max_processes = 1
+environment = [
+  "HOME=/root",
+  "USER=root",
+]
+command = [ "cofu", "-color", "-dry-run", "./entrypoint.lua" ]
+
+# apply is a task for provisioning server configuration.
+[tasks.apply]
+sandbox = true
+sandbox_source = "github.com/kohkimakimoto/cofu/examples/cofu-repository-empty"
+keep_sandboxes = 5
+max_processes = 1
+environment = [
+  "HOME=/root",
+  "USER=root",
+]
+command = [ "cofu", "-color", "./entrypoint.lua" ]
+
+# bash is a task for executing arbitrary commands.
+[tasks.bash]
+directory = "/home/root"
+environment = [
+  "HOME=/root",
+  "USER=root",
+]
+command = [ "/bin/bash" ]
+
+
+# ---------------------------------------------------------------------
+# include section
+# The include section loads extra configuration files.
+# ---------------------------------------------------------------------
+[include]
+files = [
+  "/etc/cofu-agent/conf.d/*.toml"
+]
+

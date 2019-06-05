@@ -2,7 +2,6 @@ package agent
 
 import (
 	"bufio"
-	"github.com/kr/pty"
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
@@ -11,6 +10,7 @@ import (
 	"fmt"
 	"github.com/gliderlabs/ssh"
 	"github.com/kohkimakimoto/cofu/cofu"
+	"github.com/kr/pty"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
@@ -75,6 +75,9 @@ func startSSHServer(a *Agent) error {
 		remoteAddr := ctx.RemoteAddr().String()
 		remoteHost := remoteAddr[:strings.LastIndex(remoteAddr, ":")]
 
+		logger.Debugf("remoteAddr: %s", remoteAddr)
+		logger.Debugf("remoteHost: %s", remoteHost)
+
 		if a.Config.Agent.DisableLocalAuth && (remoteHost == "127.0.0.1" || remoteHost == "[::1]") {
 			logger.Debugf("passed public key auth because the config disables local auth")
 			return true
@@ -114,7 +117,7 @@ func startSSHServer(a *Agent) error {
 		logger.Info("Using host key from the config file")
 	} else {
 		// generated host key for development environment.
-		hostKeyFile := "/tmp/cofu-agent/host.key"
+		hostKeyFile := "/tmp/cofu-agent-host.key"
 		if _, err := os.Stat(hostKeyFile); os.IsNotExist(err) {
 			b, err := generateNewKey()
 			if err != nil {
@@ -164,12 +167,12 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger.Debugf("The selected task is %s", task.Name)
 	logger.Debugf("task definition: %v", task)
 
-
 	svEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_VERSION=%s", cofu.Version),
 		fmt.Sprintf("COFU_SSH_USERNAME=%s", sess.User()),
 		fmt.Sprintf("COFU_SESSION_ID=%d", sess.ID),
 		fmt.Sprintf("COFU_TASK=%s", task.Name),
+		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
 	)
 
 	sessCommand := []string{}
@@ -437,7 +440,6 @@ func takeForwardAgentIfRequested(sess *Session, env []string) ([]string, error) 
 	return env, nil
 }
 
-
 // I borrowed this code from https://github.com/gliderlabs/ssh/blob/47df570d18ad49f77cf66f76bc3fce3e92400768/agent.go#L38
 // And modify code to remove temporary directory after closing
 func NewAgentListener(sess *Session) (net.Listener, string, error) {
@@ -557,7 +559,6 @@ func expandEnvironToString(value string, environ []string) string {
 		}
 	})
 }
-
 
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config.Agent

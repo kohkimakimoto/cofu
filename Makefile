@@ -28,9 +28,11 @@ fmt:
 
 .PHONY:test
 test: ## Run all tests
-	@export DOCKER_IMAGE="kohkimakimoto/golang:centos7" && bash -c $(CURDIR)/test/test.sh
-	@export DOCKER_IMAGE="kohkimakimoto/golang:centos6" && bash -c $(CURDIR)/test/test.sh
-	@export DOCKER_IMAGE="kohkimakimoto/golang:debian8" && bash -c $(CURDIR)/test/test.sh
+	go test -cover $$(go list ./... | grep -v vendor)
+
+.PHONY:testv
+testv: ## Run all tests with verbose outputing.
+	go test -v -cover $$(go list ./... | grep -v vendor)
 
 .PHONY: installtools
 installtools: ## Install dev tools

@@ -34,9 +34,9 @@ func Start(configFile string) error {
 }
 
 type Agent struct {
-	Config *Config
-	Logger *log.Logger
-	Gen    katsubushi.Generator
+	Config         *Config
+	Logger         *log.Logger
+	Gen            katsubushi.Generator
 	SessionManager *SessionManager
 }
 

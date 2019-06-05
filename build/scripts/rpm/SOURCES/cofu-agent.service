@@ -1,0 +1,24 @@
+[Unit]
+Description=cofu-agent
+Documentation=https://github.com/kohkimakimoto/cofu
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/
+User=root
+Group=root
+EnvironmentFile=-/etc/sysconfig/cofu-agent
+ExecStart=/usr/bin/cofu -agent $COFU_AGENT_OPTS
+StandardOutput=journal
+StandardError=inherit
+
+# Disable timeout logic and wait until process is stopped
+TimeoutStopSec=0
+
+KillSignal=SIGTERM
+SendSIGKILL=no
+SuccessExitStatus=0
+
+[Install]
+WantedBy=multi-user.target

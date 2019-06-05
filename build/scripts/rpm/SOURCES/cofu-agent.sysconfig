@@ -1,0 +1,1 @@
+COFU_AGENT_OPTS="-config-file=/etc/cofu-agent/cofu-agent.toml"

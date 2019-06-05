@@ -8,10 +8,10 @@ import (
 )
 
 type Config struct {
-	Agent      *AgentConfig              `toml:"agent" json:"agent"`
+	Agent      *AgentConfig           `toml:"agent" json:"agent"`
 	Tasks      map[string]*TaskConfig `toml:"tasks" json:"tasks"`
-	Include    *IncludeConfig            `toml:"include" json:"include"`
-	configFile string                    `toml:"-" json:"configFile"`
+	Include    *IncludeConfig         `toml:"include" json:"include"`
+	configFile string                 `toml:"-" json:"configFile"`
 }
 
 type AgentConfig struct {
@@ -95,6 +95,10 @@ func (c *Config) LoadConfigFile(path string) error {
 		if err := c.includeConfigFile(inc); err != nil {
 			return err
 		}
+	}
+
+	for k, v := range c.Tasks {
+		v.Name = k
 	}
 
 	if !filepath.IsAbs(c.Agent.SandboxesDirectory) {

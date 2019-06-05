@@ -2,9 +2,9 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gliderlabs/ssh"
 	"io"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -155,7 +155,6 @@ func (sess *Session) First() string {
 	}
 	return first
 }
-
 
 func (sess *Session) JSON(i interface{}) error {
 	b, err := json.Marshal(i)
