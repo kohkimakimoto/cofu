@@ -5,8 +5,65 @@ import (
 	"github.com/gliderlabs/ssh"
 	"io"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
+	"sync"
 )
+
+type SessionManager struct {
+	Agt      *Agent
+	Sessions map[string]map[uint64]*Session
+	mutex    *sync.Mutex
+}
+
+func NewSessionManager(a *Agent) *SessionManager {
+	return &SessionManager{
+		Agt:      a,
+		Sessions: map[string]map[uint64]*Session{},
+		mutex:    new(sync.Mutex),
+	}
+}
+
+func (m *SessionManager) SetSession(sess *Session) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	task := sess.TaskConfig
+	sessMapPerTask, ok := m.Sessions[task.Name]
+	if !ok {
+		sessMapPerTask = map[uint64]*Session{}
+	}
+
+	max := task.MaxProcesses
+	if max > 0 && len(sessMapPerTask) >= max {
+		return fmt.Errorf("Limit of max_processes: %d", max)
+	}
+
+	sessMapPerTask[sess.ID] = sess
+	m.Sessions[task.Name] = sessMapPerTask
+
+	return nil
+}
+
+func (m *SessionManager) RemoveSession(sess *Session) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	task := sess.TaskConfig
+	if task == nil {
+		return
+	}
+
+	sessMapPerTask, ok := m.Sessions[task.Name]
+	if !ok {
+		return
+	}
+
+	delete(sessMapPerTask, sess.ID)
+	m.Sessions[task.Name] = sessMapPerTask
+}
 
 type Session struct {
 	ssh.Session
@@ -15,7 +72,7 @@ type Session struct {
 	Uid                  int
 	Gid                  int
 	ForwardAgentListener net.Listener
-	AgentConfig          *AgentConfig
+	TaskConfig           *TaskConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
@@ -37,8 +94,57 @@ func (sess *Session) Terminate() {
 	if sess.ForwardAgentListener != nil {
 		sess.ForwardAgentListener.Close()
 	}
+
+	sess.Agt.SessionManager.RemoveSession(sess)
+	sess.RemoveSandboxes()
 }
 
+func (sess *Session) RemoveSandboxes() {
+	agt := sess.Agt
+	logger := agt.Logger
+	task := sess.TaskConfig
+	if task == nil {
+		return
+	}
+
+	if task.KeepSandboxes == 0 {
+		return
+	}
+
+	if !task.Sandbox {
+		return
+	}
+
+	sandboxesDir := agt.SandBoxesServiceDir(task.Name)
+	files, err := ioutil.ReadDir(sandboxesDir)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	count := len(files)
+	keeps := task.KeepSandboxes
+	removes := 0
+	if keeps > 0 {
+		removes = count - keeps
+		if removes < 0 {
+			removes = 0
+		}
+	}
+
+	logger.Debugf("%s sandbox(es): %d", task.Name, count)
+	logger.Debugf("%s keeps: %d", task.Name, keeps)
+	logger.Debugf("%s removes: %d", task.Name, removes)
+
+	for i := 0; i < removes; i++ {
+		file := files[i]
+		sandboxPath := filepath.Join(sandboxesDir, file.Name())
+		if err := os.RemoveAll(sandboxPath); err != nil {
+			logger.Error(err)
+		}
+
+		logger.Debugf("deleted %v", sandboxPath)
+	}
+}
 
 func (sess *Session) First() string {
 	command := sess.Command()

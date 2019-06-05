@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Agent      *AgentConfig   `toml:"agent" json:"agent"`
-	Include    *IncludeConfig `toml:"include" json:"include"`
-	configFile string         `toml:"-" json:"configFile"`
+	Agent      *AgentConfig              `toml:"agent" json:"agent"`
+	Tasks      map[string]*TaskConfig `toml:"tasks" json:"tasks"`
+	Include    *IncludeConfig            `toml:"include" json:"include"`
+	configFile string                    `toml:"-" json:"configFile"`
 }
 
 type AgentConfig struct {
@@ -24,6 +25,38 @@ type AgentConfig struct {
 	SandboxesDirectory string   `toml:"sandboxes_directory" json:"sandboxes_directory"`
 	IDEpoch            []int    `toml:"id_epoch" json:"id_epoch"`
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
+}
+
+// TaskConfig
+type TaskConfig struct {
+	// name
+	Name string `toml:"-" json:"name"`
+	// AuthorizedKeysFile
+	AuthorizedKeysFile *string `toml:"authorized_keys_file" json:"authorized_keys_file"`
+	// AuthorizedKeys
+	AuthorizedKeys []string `toml:"authorized_keys" json:"authorized_keys"`
+	// User
+	User string `toml:"user" json:"user"`
+	// Group
+	Group string `toml:"group" json:"group"`
+	// Directory
+	Directory string `toml:"directory" json:"directory"`
+	// Entrypoint
+	Entrypoint []string `toml:"entrypoint" json:"entrypoint"`
+	// Command
+	Command []string `toml:"command" json:"command"`
+	// Sandbox
+	Sandbox bool `toml:"sandbox" json:"sandbox"`
+	// SandboxSource
+	SandboxSource string `toml:"sandbox_source" json:"sandbox_source"`
+	// Environment
+	Environment []string `toml:"environment" json:"environment"`
+	// MaxProcesses
+	MaxProcesses int `toml:"max_processes" json:"max_processes"`
+	// Timeout
+	Timeout int64 `toml:"timeout" json:"timeout"`
+	// keep sandboxes
+	KeepSandboxes int `toml:"keep_sandboxes" json:"keep_sandboxes"`
 }
 
 type IncludeConfig struct {
@@ -44,6 +77,7 @@ func NewConfig() *Config {
 			IDEpoch:            []int{2019, 1, 1},
 			HotReload:          false,
 		},
+		Tasks: map[string]*TaskConfig{},
 		Include: &IncludeConfig{
 			Files: []string{},
 		},

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kohkimakimoto/cofu/agent"
 	"github.com/kohkimakimoto/cofu/cofu"
+	"github.com/kohkimakimoto/cofu/fetcher"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/cofu/support/logutil"
@@ -27,7 +28,7 @@ func realMain() (status int) {
 
 	// parse flags...
 	var optE, optLogLevel, optVarJson, optVarJsonFile, optConfigFile string
-	var optVersion, optDryRun, optColor, optNoColor, optAgent bool
+	var optVersion, optDryRun, optColor, optNoColor, optAgent, optFetch bool
 
 	flag.StringVar(&optE, "e", "", "")
 	flag.StringVar(&optLogLevel, "l", "info", "")
@@ -48,6 +49,9 @@ func realMain() (status int) {
 	flag.BoolVar(&optAgent, "agent", false, "")
 	flag.StringVar(&optConfigFile, "c", "", "")
 	flag.StringVar(&optConfigFile, "config-file", "", "")
+
+	// hidden flag. run a sandbox fetcher
+	flag.BoolVar(&optFetch, "fetch", false, "")
 
 	flag.Usage = func() {
 		fmt.Println(`Usage: ` + cofu.Name + ` [OPTIONS...] [RECIPE_FILE]
@@ -74,6 +78,14 @@ Options:
 	if optVersion {
 		// show version
 		fmt.Println(cofu.Name + " version " + cofu.Version + " (" + cofu.CommitHash + ")")
+		return 0
+	}
+
+	if optFetch {
+		if err := doFetch(); err != nil {
+			printError(err)
+			return 1
+		}
 		return 0
 	}
 
@@ -174,6 +186,22 @@ Options:
 	}
 
 	return status
+}
+
+func doFetch() error {
+	if len(os.Args) != 4 {
+		return fmt.Errorf("usage: cofu -fetch [src] [dst]")
+	}
+
+	src := os.Args[2]
+	dst := os.Args[3]
+
+	fet := fetcher.NewFetcher()
+	if err := fet.Fetch(src, dst); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func printError(err interface{}) {

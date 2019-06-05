@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 )
 
@@ -36,6 +37,7 @@ type Agent struct {
 	Config *Config
 	Logger *log.Logger
 	Gen    katsubushi.Generator
+	SessionManager *SessionManager
 }
 
 func NewAgent(config *Config) *Agent {
@@ -94,6 +96,9 @@ func (a *Agent) Start() error {
 	}
 	a.Gen = gen
 
+	// session manager
+	a.SessionManager = NewSessionManager(a)
+
 	go func() {
 		if err := startSSHServer(a); err != nil {
 			logger.Info(err)
@@ -108,4 +113,52 @@ func (a *Agent) Start() error {
 	logger.Info("Shutting down cofu-agent")
 
 	return nil
+}
+
+func (a *Agent) LookupTask(name string) *TaskConfig {
+	c := a.Config
+
+	if sv, ok := c.Tasks[name]; ok {
+		return sv
+	}
+
+	return nil
+}
+
+func (a *Agent) SandBoxesServiceDir(serviceName string) string {
+	return filepath.Join(a.Config.Agent.SandboxesDirectory, serviceName)
+}
+
+func (a *Agent) SandBoxDir(serviceName string, sessId uint64) string {
+	return filepath.Join(a.SandBoxesServiceDir(serviceName), fmt.Sprintf("%d", sessId))
+}
+
+func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
+	defaultUmask := syscall.Umask(0)
+	defer syscall.Umask(defaultUmask)
+
+	sessId := sess.ID
+	serviceName := sess.TaskConfig.Name
+
+	serviceDir := a.SandBoxesServiceDir(serviceName)
+	if _, err := os.Stat(serviceDir); os.IsNotExist(err) {
+		err = os.MkdirAll(serviceDir, os.FileMode(0755))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	sandBoxDir := a.SandBoxDir(serviceName, sessId)
+	if _, err := os.Stat(sandBoxDir); os.IsNotExist(err) {
+		err = os.MkdirAll(sandBoxDir, os.FileMode(0755))
+		if err != nil {
+			return "", err
+		}
+
+		if err := os.Chown(sandBoxDir, sess.Uid, sess.Gid); err != nil {
+			return "", err
+		}
+	}
+
+	return sandBoxDir, nil
 }
