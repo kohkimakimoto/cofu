@@ -93,8 +93,6 @@ func startSSHServer(a *Agent) error {
 	options = append(options, publicKeyOption)
 
 	if a.Config.Agent.HostKeyFile != "" {
-		logger.Infof("Using host key file %s", a.Config.Agent.HostKeyFile)
-
 		if _, err := os.Stat(a.Config.Agent.HostKeyFile); os.IsNotExist(err) {
 			b, err := generateNewKey()
 			if err != nil {
