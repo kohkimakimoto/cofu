@@ -26,12 +26,32 @@
 
 
 [[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.1"
+
+[[constraint]]
   branch = "master"
   name = "github.com/cjoudrey/gluahttp"
 
 [[constraint]]
   name = "github.com/fatih/color"
-  version = "1.7.0"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/gliderlabs/ssh"
+  version = "0.1.4"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-getter"
+  version = "1.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/kardianos/osext"
+
+[[constraint]]
+  name = "github.com/kayac/go-katsubushi"
+  version = "1.5.4"
 
 [[constraint]]
   branch = "master"
@@ -58,6 +78,10 @@
   name = "github.com/kohkimakimoto/loglv"
 
 [[constraint]]
+  name = "github.com/kr/pty"
+  version = "1.1.4"
+
+[[constraint]]
   name = "github.com/labstack/gommon"
   version = "0.2.8"
 
@@ -68,6 +92,10 @@
 [[constraint]]
   branch = "master"
   name = "github.com/otm/gluash"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.1"
 
 [[constraint]]
   branch = "master"

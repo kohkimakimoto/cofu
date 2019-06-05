@@ -1,0 +1,7 @@
+# testing
+[devserver: up] bash -c 'cd devserver && docker-compose up -d'
+[devserver: up with build] bash -c 'cd devserver && docker-compose up -d --build'
+[devserver: down] bash -c 'cd devserver && docker-compose down'
+[devserver: shell] bash -c 'cd devserver && docker-compose exec -w /var/cofu devserver /bin/bash'
+[devserver: ps] bash -c 'cd devserver && docker-compose ps'
+

@@ -1,0 +1,10 @@
+version: '3.6'
+services:
+  devserver:
+    container_name: "cofu-devserver"
+    build: .
+    privileged: true
+    command: /sbin/init
+    volumes:
+      - ../:/var/cofu
+

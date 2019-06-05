@@ -20,7 +20,7 @@ rm -rf $outputs_dir/packaging/*
 
 echo "Building RPM packages..."
 cd $scripts_dir/rpm
-for image in 'kohkimakimoto/rpmbuild:el5' 'kohkimakimoto/rpmbuild:el6' 'kohkimakimoto/rpmbuild:el7'; do
+for image in 'kohkimakimoto/rpmbuild:el7'; do
     docker run \
         --env DOCKER_IMAGE=${image}  \
         --env PRODUCT_NAME=${PRODUCT_NAME}  \
