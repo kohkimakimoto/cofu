@@ -149,11 +149,11 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	logger.Debugf("cofu-agent got a ssh command: %v", sess.Command())
 
-	task := a.LookupTask(sess.User())
-	if task == nil {
-		return fmt.Errorf("Task %s is not found", sess.User())
+	srv, matched := a.LookupService(sess.User())
+	if srv == nil {
+		return fmt.Errorf("Service %s is not found", sess.User())
 	}
-	sess.TaskConfig = task
+	sess.ServiceConfig = srv
 
 	if err := a.SessionManager.SetSession(sess); err != nil {
 		return err
@@ -161,35 +161,39 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	defer sess.Terminate()
 
 	logger.Infof("Allocated session %d", sess.ID)
-
-	logger.Debugf("The selected task is %s", task.Name)
-	logger.Debugf("task definition: %v", task)
+	logger.Debugf("The selected service is %s", srv.Name)
+	logger.Debugf("Service definition: %v", srv)
 
 	svEnviron := append(sess.Environ(),
-		fmt.Sprintf("COFU_VERSION=%s", cofu.Version),
-		fmt.Sprintf("COFU_SSH_USERNAME=%s", sess.User()),
-		fmt.Sprintf("COFU_SESSION_ID=%d", sess.ID),
-		fmt.Sprintf("COFU_TASK=%s", task.Name),
-		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
+		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
+		fmt.Sprintf("COFU_AGENT_SSH_USERNAME=%s", sess.User()),
+		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
+		fmt.Sprintf("COFU_AGENT_SERVICE=%s", srv.Name),
+		fmt.Sprintf("COFU_AGENT_COMMAND=%s", cofu.BinPath),
 	)
+
+	// expand matched strings
+	for i, m := range matched {
+		svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_NAME_%d=%s", i, m))
+	}
 
 	sessCommand := []string{}
 	if len(sess.Command()) > 0 {
 		sessCommand = sess.Command()
-	} else if task.Command != nil && len(task.Command) > 0 {
-		sessCommand = task.Command
+	} else if srv.Command != nil && len(srv.Command) > 0 {
+		sessCommand = srv.Command
 	}
 
-	svEnviron = append(svEnviron, fmt.Sprintf("COFU_SESSION_COMMAND=%s", strings.Join(sessCommand, " ")))
+	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_COMMAND=%s", strings.Join(sessCommand, " ")))
 
 	if isPty {
-		svEnviron = append(svEnviron, "COFU_PTY=1")
+		svEnviron = append(svEnviron, "COFU_AGENT_PTY=1")
 	}
 
 	// setup user and group
 	var uid, gid int
 	if os.Getuid() == 0 {
-		userName := expandEnvironToString(task.User, svEnviron)
+		userName := expandEnvironToString(srv.User, svEnviron)
 		if userName != "" {
 			uid, gid, err = getUidAndGidFromUsername(userName)
 			if err != nil {
@@ -200,7 +204,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 			gid = os.Getgid()
 		}
 
-		groupName := expandEnvironToString(task.Group, svEnviron)
+		groupName := expandEnvironToString(srv.Group, svEnviron)
 		if groupName != "" {
 			id, err := LookupGroup(groupName)
 			if err != nil {
@@ -214,7 +218,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		logger.Debug("The cofu is running non root user. The service can be executed only by same user who runs cofu.")
 		uid = os.Getuid()
 		gid = os.Getgid()
-		userName := expandEnvironToString(task.User, svEnviron)
+		userName := expandEnvironToString(srv.User, svEnviron)
 		if userName != "" {
 			logger.Warnf("ignore 'user' config. because the cofu is running non root user.")
 		}
@@ -230,20 +234,20 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	// setup sandbox
 	var sandBoxDir string
-	if task.Sandbox {
+	if srv.Sandbox {
 		sandBoxDir, err = a.CreateSandBoxDirIfNotExist(sess)
 		if err != nil {
 			return err
 		}
-		svEnviron = append(svEnviron, fmt.Sprintf("COFU_SANDBOX_DIR=%s", sandBoxDir))
+		svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
 
-		if task.SandboxSource != "" {
+		if srv.SandboxSource != "" {
 			// remove empty sandbox directory before downloading source.
 			if err := os.RemoveAll(sandBoxDir); err != nil {
 				return err
 			}
 
-			cmd := exec.Command(cofu.BinPath, "-fetch", task.SandboxSource, sandBoxDir)
+			cmd := exec.Command(cofu.BinPath, "-fetch", srv.SandboxSource, sandBoxDir)
 			cmd.Env = append(os.Environ(), svEnviron...)
 			b, err := cmd.CombinedOutput()
 			if b != nil {
@@ -256,14 +260,14 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		}
 	}
 
-	for _, v := range task.Environment {
+	for _, v := range srv.Environment {
 		svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
 	}
 
 	// setup command
 	var commandAndArgs []string
-	if task.Entrypoint != nil && len(task.Entrypoint) > 0 {
-		commandAndArgs = task.Entrypoint
+	if srv.Entrypoint != nil && len(srv.Entrypoint) > 0 {
+		commandAndArgs = srv.Entrypoint
 	} else {
 		commandAndArgs = []string{}
 	}
@@ -275,7 +279,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 
 	// setup current working directory
-	wd := expandEnvironToString(task.Directory, svEnviron)
+	wd := expandEnvironToString(srv.Directory, svEnviron)
 	if wd == "" && sandBoxDir != "" {
 		wd = sandBoxDir
 	}
@@ -340,18 +344,18 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 			return err
 		}
 
-		if task.Timeout > 0 {
+		if srv.Timeout > 0 {
 			done := make(chan error)
 			go func() {
 				done <- cmd.Wait()
 			}()
 
 			select {
-			case <-time.After(time.Duration(task.Timeout) * time.Second):
+			case <-time.After(time.Duration(srv.Timeout) * time.Second):
 				if err := cmd.Process.Kill(); err != nil {
 					return errors.Wrapf(err, "failed to kill: "+err.Error())
 				}
-				return fmt.Errorf("cofu session timeout. it took time over %d sec.", task.Timeout)
+				return fmt.Errorf("cofu session timeout. it took time over %d sec.", srv.Timeout)
 			case err := <-done:
 				defer close(done)
 				if err != nil {
@@ -561,6 +565,7 @@ func expandEnvironToString(value string, environ []string) string {
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config.Agent
 	logger := a.Logger
+	serviceConfig, _ := a.LookupService(ctx.User())
 
 	var keysdata []byte
 
@@ -577,6 +582,10 @@ func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	}
 
 	authorizedKeys := config.AuthorizedKeys
+	if serviceConfig != nil && serviceConfig.AuthorizedKeys != nil {
+		// override service config
+		authorizedKeys = serviceConfig.AuthorizedKeys
+	}
 
 	for _, s := range authorizedKeys {
 		keysdata = append(keysdata, []byte(s+"\n")...)

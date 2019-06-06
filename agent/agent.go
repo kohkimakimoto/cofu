@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"syscall"
 )
 
@@ -115,14 +116,28 @@ func (a *Agent) Start() error {
 	return nil
 }
 
-func (a *Agent) LookupTask(name string) *TaskConfig {
+func (a *Agent) LookupService(name string) (*ServiceConfig, []string) {
 	c := a.Config
 
-	if sv, ok := c.Tasks[name]; ok {
-		return sv
+	keys := make([]string, 0, len(c.Services))
+	for k := range c.Services {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		sv := c.Services[k]
+
+		if sv.namePatternRegexp != nil {
+			if matched := sv.namePatternRegexp.FindStringSubmatch(name); matched != nil {
+				return sv, matched
+			}
+		} else if sv.Name == name {
+			return sv, []string{sv.Name}
+		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (a *Agent) SandBoxesServiceDir(serviceName string) string {
@@ -138,7 +153,7 @@ func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	defer syscall.Umask(defaultUmask)
 
 	sessId := sess.ID
-	serviceName := sess.TaskConfig.Name
+	serviceName := sess.ServiceConfig.Name
 
 	serviceDir := a.SandBoxesServiceDir(serviceName)
 	if _, err := os.Stat(serviceDir); os.IsNotExist(err) {

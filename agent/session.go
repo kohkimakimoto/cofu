@@ -30,19 +30,19 @@ func (m *SessionManager) SetSession(sess *Session) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	task := sess.TaskConfig
-	sessMapPerTask, ok := m.Sessions[task.Name]
+	srv := sess.ServiceConfig
+	sessMapPerService, ok := m.Sessions[srv.Name]
 	if !ok {
-		sessMapPerTask = map[uint64]*Session{}
+		sessMapPerService = map[uint64]*Session{}
 	}
 
-	max := task.MaxProcesses
-	if max > 0 && len(sessMapPerTask) >= max {
+	max := srv.MaxProcesses
+	if max > 0 && len(sessMapPerService) >= max {
 		return fmt.Errorf("Limit of max_processes: %d", max)
 	}
 
-	sessMapPerTask[sess.ID] = sess
-	m.Sessions[task.Name] = sessMapPerTask
+	sessMapPerService[sess.ID] = sess
+	m.Sessions[srv.Name] = sessMapPerService
 
 	return nil
 }
@@ -51,18 +51,18 @@ func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	task := sess.TaskConfig
-	if task == nil {
+	srv := sess.ServiceConfig
+	if srv == nil {
 		return
 	}
 
-	sessMapPerTask, ok := m.Sessions[task.Name]
+	sessMapPerService, ok := m.Sessions[srv.Name]
 	if !ok {
 		return
 	}
 
-	delete(sessMapPerTask, sess.ID)
-	m.Sessions[task.Name] = sessMapPerTask
+	delete(sessMapPerService, sess.ID)
+	m.Sessions[srv.Name] = sessMapPerService
 }
 
 type Session struct {
@@ -72,7 +72,7 @@ type Session struct {
 	Uid                  int
 	Gid                  int
 	ForwardAgentListener net.Listener
-	TaskConfig           *TaskConfig
+	ServiceConfig        *ServiceConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
@@ -102,27 +102,27 @@ func (sess *Session) Terminate() {
 func (sess *Session) RemoveSandboxes() {
 	agt := sess.Agt
 	logger := agt.Logger
-	task := sess.TaskConfig
-	if task == nil {
+	srv := sess.ServiceConfig
+	if srv == nil {
 		return
 	}
 
-	if task.KeepSandboxes == 0 {
+	if srv.KeepSandboxes == 0 {
 		return
 	}
 
-	if !task.Sandbox {
+	if !srv.Sandbox {
 		return
 	}
 
-	sandboxesDir := agt.SandBoxesServiceDir(task.Name)
+	sandboxesDir := agt.SandBoxesServiceDir(srv.Name)
 	files, err := ioutil.ReadDir(sandboxesDir)
 	if err != nil {
 		logger.Error(err)
 	}
 
 	count := len(files)
-	keeps := task.KeepSandboxes
+	keeps := srv.KeepSandboxes
 	removes := 0
 	if keeps > 0 {
 		removes = count - keeps
@@ -131,9 +131,9 @@ func (sess *Session) RemoveSandboxes() {
 		}
 	}
 
-	logger.Debugf("%s sandbox(es): %d", task.Name, count)
-	logger.Debugf("%s keeps: %d", task.Name, keeps)
-	logger.Debugf("%s removes: %d", task.Name, removes)
+	logger.Debugf("%s sandbox(es): %d", srv.Name, count)
+	logger.Debugf("%s keeps: %d", srv.Name, keeps)
+	logger.Debugf("%s removes: %d", srv.Name, removes)
 
 	for i := 0; i < removes; i++ {
 		file := files[i]

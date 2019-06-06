@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"path/filepath"
+	"regexp"
 	"time"
 )
 
 type Config struct {
-	Agent      *AgentConfig           `toml:"agent" json:"agent"`
-	Tasks      map[string]*TaskConfig `toml:"tasks" json:"tasks"`
-	Include    *IncludeConfig         `toml:"include" json:"include"`
-	configFile string                 `toml:"-" json:"configFile"`
+	Agent      *AgentConfig              `toml:"agent" json:"agent"`
+	Services   map[string]*ServiceConfig `toml:"services" json:"services"`
+	Include    *IncludeConfig            `toml:"include" json:"include"`
+	configFile string                    `toml:"-" json:"configFile"`
 }
 
 type AgentConfig struct {
@@ -27,10 +28,12 @@ type AgentConfig struct {
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
 }
 
-// TaskConfig
-type TaskConfig struct {
-	// name
+// ServiceConfig
+type ServiceConfig struct {
+	// Name
 	Name string `toml:"-" json:"name"`
+	// NamePattern
+	NamePattern string `toml:"name_pattern" json:"name_pattern"`
 	// AuthorizedKeysFile
 	AuthorizedKeysFile *string `toml:"authorized_keys_file" json:"authorized_keys_file"`
 	// AuthorizedKeys
@@ -57,6 +60,8 @@ type TaskConfig struct {
 	Timeout int64 `toml:"timeout" json:"timeout"`
 	// keep sandboxes
 	KeepSandboxes int `toml:"keep_sandboxes" json:"keep_sandboxes"`
+	// namePatternRegexp
+	namePatternRegexp *regexp.Regexp `toml:"-" json:"-"`
 }
 
 type IncludeConfig struct {
@@ -77,7 +82,7 @@ func NewConfig() *Config {
 			IDEpoch:            []int{2019, 1, 1},
 			HotReload:          false,
 		},
-		Tasks: map[string]*TaskConfig{},
+		Services: map[string]*ServiceConfig{},
 		Include: &IncludeConfig{
 			Files: []string{},
 		},
@@ -97,8 +102,15 @@ func (c *Config) LoadConfigFile(path string) error {
 		}
 	}
 
-	for k, v := range c.Tasks {
-		v.Name = k
+	for k, srv := range c.Services {
+		srv.Name = k
+		if srv.NamePattern != "" {
+			reg, err := regexp.Compile(srv.NamePattern)
+			if err != nil {
+				return err
+			}
+			srv.namePatternRegexp = reg
+		}
 	}
 
 	if !filepath.IsAbs(c.Agent.SandboxesDirectory) {
