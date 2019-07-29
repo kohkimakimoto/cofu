@@ -26,43 +26,37 @@ func NewSessionManager(a *Agent) *SessionManager {
 	}
 }
 
-func (m *SessionManager) SetSession(sess *Session) error {
+func (m *SessionManager) SetSession(sess *Session) int {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	srv := sess.ServiceConfig
-	sessMapPerService, ok := m.Sessions[srv.Name]
+	sessMapPerService, ok := m.Sessions[sess.User()]
 	if !ok {
 		sessMapPerService = map[uint64]*Session{}
 	}
 
-	max := srv.MaxProcesses
-	if max > 0 && len(sessMapPerService) >= max {
-		return fmt.Errorf("Limit of max_processes: %d", max)
-	}
+	//max := srv.MaxProcesses
+	//if max > 0 && len(sessMapPerService) >= max {
+	//	return fmt.Errorf("Limit of max_processes: %d", max)
+	//}
 
 	sessMapPerService[sess.ID] = sess
-	m.Sessions[srv.Name] = sessMapPerService
+	m.Sessions[sess.User()] = sessMapPerService
 
-	return nil
+	return len(sessMapPerService)
 }
 
 func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	srv := sess.ServiceConfig
-	if srv == nil {
-		return
-	}
-
-	sessMapPerService, ok := m.Sessions[srv.Name]
+	sessMapPerService, ok := m.Sessions[sess.User()]
 	if !ok {
 		return
 	}
 
 	delete(sessMapPerService, sess.ID)
-	m.Sessions[srv.Name] = sessMapPerService
+	m.Sessions[sess.User()] = sessMapPerService
 }
 
 type Session struct {
@@ -72,7 +66,6 @@ type Session struct {
 	Uid                  int
 	Gid                  int
 	ForwardAgentListener net.Listener
-	ServiceConfig        *ServiceConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
@@ -102,27 +95,19 @@ func (sess *Session) Terminate() {
 func (sess *Session) RemoveSandboxes() {
 	agt := sess.Agt
 	logger := agt.Logger
-	srv := sess.ServiceConfig
-	if srv == nil {
+
+	if agt.Config.Agent.KeepSandboxes == 0 {
 		return
 	}
 
-	if srv.KeepSandboxes == 0 {
-		return
-	}
-
-	if !srv.Sandbox {
-		return
-	}
-
-	sandboxesDir := agt.SandBoxesServiceDir(srv.Name)
+	sandboxesDir := agt.SandBoxesUserDir(sess.User())
 	files, err := ioutil.ReadDir(sandboxesDir)
 	if err != nil {
 		logger.Error(err)
 	}
 
 	count := len(files)
-	keeps := srv.KeepSandboxes
+	keeps := agt.Config.Agent.KeepSandboxes
 	removes := 0
 	if keeps > 0 {
 		removes = count - keeps
@@ -131,9 +116,9 @@ func (sess *Session) RemoveSandboxes() {
 		}
 	}
 
-	logger.Debugf("%s sandbox(es): %d", srv.Name, count)
-	logger.Debugf("%s keeps: %d", srv.Name, keeps)
-	logger.Debugf("%s removes: %d", srv.Name, removes)
+	logger.Debugf("%s sandbox(es): %d", sess.User(), count)
+	logger.Debugf("%s keeps: %d", sess.User(), keeps)
+	logger.Debugf("%s removes: %d", sess.User(), removes)
 
 	for i := 0; i < removes; i++ {
 		file := files[i]

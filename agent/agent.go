@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"syscall"
 )
 
@@ -116,36 +115,12 @@ func (a *Agent) Start() error {
 	return nil
 }
 
-func (a *Agent) LookupService(name string) (*ServiceConfig, []string) {
-	c := a.Config
-
-	keys := make([]string, 0, len(c.Services))
-	for k := range c.Services {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		sv := c.Services[k]
-
-		if sv.namePatternRegexp != nil {
-			if matched := sv.namePatternRegexp.FindStringSubmatch(name); matched != nil {
-				return sv, matched
-			}
-		} else if sv.Name == name {
-			return sv, []string{sv.Name}
-		}
-	}
-
-	return nil, nil
+func (a *Agent) SandBoxesUserDir(username string) string {
+	return filepath.Join(a.Config.Agent.SandboxesDirectory, username)
 }
 
-func (a *Agent) SandBoxesServiceDir(serviceName string) string {
-	return filepath.Join(a.Config.Agent.SandboxesDirectory, serviceName)
-}
-
-func (a *Agent) SandBoxDir(serviceName string, sessId uint64) string {
-	return filepath.Join(a.SandBoxesServiceDir(serviceName), fmt.Sprintf("%d", sessId))
+func (a *Agent) SandBoxDir(username string, sessId uint64) string {
+	return filepath.Join(a.SandBoxesUserDir(username), fmt.Sprintf("%d", sessId))
 }
 
 func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
@@ -153,17 +128,17 @@ func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	defer syscall.Umask(defaultUmask)
 
 	sessId := sess.ID
-	serviceName := sess.ServiceConfig.Name
+	username := sess.User()
 
-	serviceDir := a.SandBoxesServiceDir(serviceName)
-	if _, err := os.Stat(serviceDir); os.IsNotExist(err) {
-		err = os.MkdirAll(serviceDir, os.FileMode(0755))
+	userDir := a.SandBoxesUserDir(username)
+	if _, err := os.Stat(userDir); os.IsNotExist(err) {
+		err = os.MkdirAll(userDir, os.FileMode(0755))
 		if err != nil {
 			return "", err
 		}
 	}
 
-	sandBoxDir := a.SandBoxDir(serviceName, sessId)
+	sandBoxDir := a.SandBoxDir(username, sessId)
 	if _, err := os.Stat(sandBoxDir); os.IsNotExist(err) {
 		err = os.MkdirAll(sandBoxDir, os.FileMode(0755))
 		if err != nil {

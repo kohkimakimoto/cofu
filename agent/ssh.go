@@ -11,7 +11,6 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kr/pty"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net"
@@ -22,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -149,42 +147,28 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	logger.Debugf("cofu-agent got a ssh command: %v", sess.Command())
 
-	srv, matched := a.LookupService(sess.User())
-	if srv == nil {
-		return fmt.Errorf("Service %s is not found", sess.User())
-	}
-	sess.ServiceConfig = srv
-
-	if err := a.SessionManager.SetSession(sess); err != nil {
-		return err
-	}
+	numSess := a.SessionManager.SetSession(sess)
 	defer sess.Terminate()
 
 	logger.Infof("Allocated session %d", sess.ID)
-	logger.Debugf("The selected service is %s", srv.Name)
-	logger.Debugf("Service definition: %v", srv)
+	logger.Debugf("The session user is %s", sess.User())
 
 	svEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
-		fmt.Sprintf("COFU_AGENT_SSH_USERNAME=%s", sess.User()),
+		fmt.Sprintf("COFU_AGENT_SESSION_USER=%s", sess.User()),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
-		fmt.Sprintf("COFU_AGENT_SERVICE=%s", srv.Name),
+		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
 		fmt.Sprintf("COFU_AGENT_COMMAND=%s", cofu.BinPath),
 	)
 
-	// expand matched strings
-	for i, m := range matched {
-		svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_NAME_%d=%s", i, m))
-	}
-
-	sessCommand := []string{}
+	commandAndArgs := []string{}
 	if len(sess.Command()) > 0 {
-		sessCommand = sess.Command()
-	} else if srv.Command != nil && len(srv.Command) > 0 {
-		sessCommand = srv.Command
+		commandAndArgs = sess.Command()
+	} else {
+		commandAndArgs = []string{"/bin/bash"}
 	}
 
-	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_COMMAND=%s", strings.Join(sessCommand, " ")))
+	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_COMMAND=%s", strings.Join(commandAndArgs, " ")))
 
 	if isPty {
 		svEnviron = append(svEnviron, "COFU_AGENT_PTY=1")
@@ -193,35 +177,16 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	// setup user and group
 	var uid, gid int
 	if os.Getuid() == 0 {
-		userName := expandEnvironToString(srv.User, svEnviron)
-		if userName != "" {
-			uid, gid, err = getUidAndGidFromUsername(userName)
-			if err != nil {
-				return err
-			}
-		} else {
-			uid = os.Getuid()
-			gid = os.Getgid()
+		uid, gid, err = getUidAndGidFromUsername(sess.User())
+		if err != nil {
+			return err
 		}
 
-		groupName := expandEnvironToString(srv.Group, svEnviron)
-		if groupName != "" {
-			id, err := LookupGroup(groupName)
-			if err != nil {
-				return err
-			}
-			gid = id
-		}
-
-		logger.Debugf("The service will run by user: %d, group: %d", uid, gid)
+		logger.Debugf("This session will run by user: %d, group: %d", uid, gid)
 	} else {
 		logger.Debug("The cofu is running non root user. The service can be executed only by same user who runs cofu.")
 		uid = os.Getuid()
 		gid = os.Getgid()
-		userName := expandEnvironToString(srv.User, svEnviron)
-		if userName != "" {
-			logger.Warnf("ignore 'user' config. because the cofu is running non root user.")
-		}
 	}
 	sess.Uid = uid
 	sess.Gid = gid
@@ -233,64 +198,15 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 
 	// setup sandbox
-	var sandBoxDir string
-	if srv.Sandbox {
-		sandBoxDir, err = a.CreateSandBoxDirIfNotExist(sess)
-		if err != nil {
-			return err
-		}
-		svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
-
-		if srv.SandboxSource != "" {
-			// remove empty sandbox directory before downloading source.
-			if err := os.RemoveAll(sandBoxDir); err != nil {
-				return err
-			}
-
-			cmd := exec.Command(cofu.BinPath, "-fetch", srv.SandboxSource, sandBoxDir)
-			cmd.Env = append(os.Environ(), svEnviron...)
-			b, err := cmd.CombinedOutput()
-			if b != nil {
-				logger.Debugf(string(b))
-			}
-
-			if err != nil {
-				return errors.Wrapf(err, "fetching process output: %s", string(b))
-			}
-		}
+	sandBoxDir, err := a.CreateSandBoxDirIfNotExist(sess)
+	if err != nil {
+		return err
 	}
+	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
 
-	for _, v := range srv.Environment {
-		svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
-	}
-
-	// setup command
-	var commandAndArgs []string
-	if srv.Entrypoint != nil && len(srv.Entrypoint) > 0 {
-		commandAndArgs = srv.Entrypoint
-	} else {
-		commandAndArgs = []string{}
-	}
-
-	commandAndArgs = append(commandAndArgs, sessCommand...)
-
-	if len(commandAndArgs) == 0 {
-		return errors.New("You've successfully authenticated, but it does not support accessing without args.")
-	}
-
-	// setup current working directory
-	wd := expandEnvironToString(srv.Directory, svEnviron)
-	if wd == "" && sandBoxDir != "" {
-		wd = sandBoxDir
-	}
-
-	if wd == "" {
-		u, err := LookupUserStruct(fmt.Sprintf("%d", uid))
-		if err != nil {
-			return err
-		}
-		wd = u.HomeDir
-	}
+	//for _, v := range srv.Environment {
+	//	svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
+	//}
 
 	command := commandAndArgs[0]
 	args := []string{}
@@ -306,7 +222,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
 	}
-	cmd.Dir = wd
+	cmd.Dir = sandBoxDir
 
 	if isPty {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
@@ -343,35 +259,9 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-
-		if srv.Timeout > 0 {
-			done := make(chan error)
-			go func() {
-				done <- cmd.Wait()
-			}()
-
-			select {
-			case <-time.After(time.Duration(srv.Timeout) * time.Second):
-				if err := cmd.Process.Kill(); err != nil {
-					return errors.Wrapf(err, "failed to kill: "+err.Error())
-				}
-				return fmt.Errorf("cofu session timeout. it took time over %d sec.", srv.Timeout)
-			case err := <-done:
-				defer close(done)
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-		} else {
-			err := cmd.Wait()
-			if err != nil {
-				return err
-			}
-		}
 	}
 
-	return nil
+	return cmd.Wait()
 }
 
 func exitStatus(err error) int {
@@ -565,7 +455,6 @@ func expandEnvironToString(value string, environ []string) string {
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config.Agent
 	logger := a.Logger
-	serviceConfig, _ := a.LookupService(ctx.User())
 
 	var keysdata []byte
 
@@ -581,13 +470,7 @@ func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 		keysdata = data
 	}
 
-	authorizedKeys := config.AuthorizedKeys
-	if serviceConfig != nil && serviceConfig.AuthorizedKeys != nil {
-		// override service config
-		authorizedKeys = serviceConfig.AuthorizedKeys
-	}
-
-	for _, s := range authorizedKeys {
+	for _, s := range config.AuthorizedKeys {
 		keysdata = append(keysdata, []byte(s+"\n")...)
 	}
 
