@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Agent      *AgentConfig   `toml:"agent" json:"agent"`
-	configFile string         `toml:"-" json:"configFile"`
+	Agent      *AgentConfig `toml:"agent" json:"agent"`
+	configFile string       `toml:"-" json:"configFile"`
 }
 
 type AgentConfig struct {
@@ -22,6 +22,7 @@ type AgentConfig struct {
 	HostKey            string   `toml:"host_key" json:"-"`
 	SandboxesDirectory string   `toml:"sandboxes_directory" json:"sandboxes_directory"`
 	KeepSandboxes      int      `toml:"keep_sandboxes" json:"keep_sandboxes"`
+	Environment        []string `toml:"environment" json:"environment"`
 	IDEpoch            []int    `toml:"id_epoch" json:"id_epoch"`
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
 }
@@ -42,6 +43,7 @@ func NewConfig() *Config {
 			HostKey:            "",
 			SandboxesDirectory: "/tmp/cofu-agent/sandboxes",
 			KeepSandboxes:      0,
+			Environment:        []string{},
 			IDEpoch:            []int{2019, 1, 1},
 			HotReload:          false,
 		},

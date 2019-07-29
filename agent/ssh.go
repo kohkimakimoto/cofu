@@ -158,7 +158,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		fmt.Sprintf("COFU_AGENT_SESSION_USER=%s", sess.User()),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
 		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
-		fmt.Sprintf("COFU_AGENT_COMMAND=%s", cofu.BinPath),
+		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
 	)
 
 	commandAndArgs := []string{}
@@ -204,9 +204,10 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
 
-	//for _, v := range srv.Environment {
-	//	svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
-	//}
+	// setup environment variables
+	for _, v := range a.Config.Agent.Environment {
+		svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
+	}
 
 	command := commandAndArgs[0]
 	args := []string{}
