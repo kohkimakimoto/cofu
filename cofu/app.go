@@ -20,27 +20,27 @@ import (
 )
 
 type App struct {
-	LState                *lua.LState
-	Logger                Logger
-	ResourceTypes         []*ResourceType
-	ResourceTypesMap      map[string]*ResourceType
-	Resources             []*Resource
-	DelayedNotifications  []*Notification
-	Infra                 *infra.Infra
-	DryRun                bool
-	Tmpdir                string
-	Tmpfiles              []string
-	variable              map[string]interface{}
-	Parent                *App
-	Level                 int
-	LogHeaderWitoutIndent string
-	BuiltinRecipes        map[string]string
+	LState               *lua.LState
+	Logger               Logger
+	ResourceTypes        []*ResourceType
+	ResourceTypesMap     map[string]*ResourceType
+	Resources            []*Resource
+	DelayedNotifications []*Notification
+	Infra                *infra.Infra
+	DryRun               bool
+	Tmpdir               string
+	Tmpfiles             []string
+	variable             map[string]interface{}
+	Parent               *App
+	Level                int
+	LogHeader            string
+	BuiltinRecipes       map[string]string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
 
 func NewApp() *App {
-	defaultLogHeader := `${prefix} ${level}`
+	defaultLogHeader := `${level} ${prefix}`
 	defaultLogger := log.New("cofu")
 	defaultLogger.SetPrefix("")
 	defaultLogger.SetHeader(defaultLogHeader)
@@ -58,10 +58,10 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
-		Parent:                nil,
-		Level:                 0,
-		LogHeaderWitoutIndent: defaultLogHeader,
-		BuiltinRecipes:        map[string]string{},
+		Parent:         nil,
+		Level:          0,
+		LogHeader:      defaultLogHeader,
+		BuiltinRecipes: map[string]string{},
 	}
 }
 
@@ -122,7 +122,7 @@ func (app *App) Close() {
 	}
 
 	if app.Parent != nil {
-		app.Logger.SetHeader(app.Parent.LogHeaderWitoutIndent + GenLogIndent(app.Parent.Level))
+		app.Logger.SetPrefix(GenLogIndent(app.Parent.Level))
 	}
 }
 

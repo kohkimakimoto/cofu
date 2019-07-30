@@ -90,7 +90,7 @@ func resourceRunAction(r *cofu.Resource) error {
 	app.Parent = r.App
 	app.Tmpdir = r.App.Tmpdir
 	app.Level = r.App.Level + 1
-	app.Logger.SetHeader(r.App.LogHeaderWitoutIndent + cofu.GenLogIndent(app.Level))
+	app.Logger.SetPrefix(cofu.GenLogIndent(app.Level))
 	app.BuiltinRecipes = r.App.BuiltinRecipes
 
 	if err := app.Init(); err != nil {
