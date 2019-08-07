@@ -31,8 +31,7 @@ func openLibs(app *App) {
 		L.SetGlobal(resourceType.Name, L.NewFunction(resourceType.LGFunction()))
 	}
 	L.SetGlobal("run_command", L.NewFunction(fnRunCommand))
-	L.SetGlobal("include_recipe", L.NewFunction(fnIncludeRecipe))
-	// define is deprecated now, but still be used fo BC.
+	L.SetGlobal("include_recipe", L.NewFunction(fnIncludeRecipe(app)))
 	L.SetGlobal("define", L.NewFunction(fnDefine))
 
 	// built-in packages
@@ -57,7 +56,7 @@ func cofuLuaModuleLoader(app *App) func(*lua.LState) int {
 
 		L.SetFuncs(tb, map[string]lua.LGFunction{
 			"run_command":    fnRunCommand,
-			"include_recipe": fnIncludeRecipe,
+			"include_recipe": fnIncludeRecipe(app),
 			"define":         fnDefine,
 		})
 
@@ -189,23 +188,25 @@ func fnRunCommand(L *lua.LState) int {
 	return 1
 }
 
-func fnIncludeRecipe(L *lua.LState) int {
-	path := L.CheckString(1)
+func fnIncludeRecipe(app *App) lua.LGFunction {
+	return func (L *lua.LState) int {
+		path := L.CheckString(1)
 
-	if !filepath.IsAbs(path) {
-		current := CurrentDir(L)
-		path = filepath.Join(current, path)
+		if !filepath.IsAbs(path) {
+			current := CurrentDir(L)
+			path = filepath.Join(current, path)
+		}
+
+		if !strings.HasSuffix(path, ".lua") {
+			path += ".lua"
+		}
+
+		if err := loadRecipeFile(path, app.LState, app); err != nil {
+			panic(err)
+		}
+
+		return 0
 	}
-
-	if !strings.HasSuffix(path, ".lua") {
-		path += ".lua"
-	}
-
-	if err := L.DoFile(path); err != nil {
-		panic(err)
-	}
-
-	return 0
 }
 
 func fnDefine(L *lua.LState) int {
@@ -242,9 +243,9 @@ func registerDefinition(L *lua.LState, name string, config *lua.LTable) {
 	}
 
 	definition := &Definition{
-		Name:   name,
-		Params: config,
-		Func:   fn,
+		Name:          name,
+		DefaultParams: config,
+		Func:          fn,
 	}
 
 	app.LoadDefinition(definition)

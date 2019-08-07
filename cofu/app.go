@@ -10,6 +10,7 @@ import (
 	"github.com/kohkimakimoto/loglv"
 	"github.com/labstack/gommon/log"
 	"github.com/yuin/gopher-lua"
+	"github.com/yookoala/realpath"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -35,6 +36,7 @@ type App struct {
 	Level                int
 	LogHeader            string
 	BuiltinRecipes       map[string]string
+	Basepath             string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
@@ -62,6 +64,7 @@ func NewApp() *App {
 		Level:          0,
 		LogHeader:      defaultLogHeader,
 		BuiltinRecipes: map[string]string{},
+		Basepath: "",
 	}
 }
 
@@ -179,11 +182,7 @@ func (app *App) LoadRecipe(recipeContent string) error {
 }
 
 func (app *App) LoadRecipeFile(recipeFile string) error {
-	if err := app.LState.DoFile(recipeFile); err != nil {
-		return err
-	}
-
-	return nil
+	return loadRecipeFile(recipeFile, app.LState, app)
 }
 
 func (app *App) RemoveDuplicateDelayedNotification() {
@@ -288,7 +287,7 @@ func (app *App) Run(dryRun bool) (err error) {
 		logger.Debugf("os_release '%s'", app.Infra.Command().OSRelease())
 	}
 
-	logger.Infof("Loaded %d resource(s).", len(app.Resources))
+	logger.Debugf("Loaded %d resource(s).", len(app.Resources))
 
 	for _, r := range app.Resources {
 		err := r.Run("")
@@ -383,6 +382,11 @@ func (app *App) IsRootApp() bool {
 	return app.Level == 0
 }
 
+
+func (app *App) LoadUserResources() error {
+	return nil
+}
+
 func GetApp(L *lua.LState) (*App, error) {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
 	if !ok {
@@ -436,4 +440,36 @@ func GenLogIndent(level int) string {
 
 func SetNoColor(b bool) {
 	fatihColor.NoColor = false
+}
+
+func getBasepath(L *lua.LState) string {
+	basepath, err := basepath(L)
+	if err != nil {
+		wd, err2 := os.Getwd()
+		if err2 == nil {
+			basepath = wd
+		}
+	}
+
+	return basepath
+}
+
+func loadRecipeFile(recipeFile string, L *lua.LState, app *App) error {
+	orgBase := app.Basepath
+	defer func () {
+		app.Basepath = orgBase
+	}()
+
+	dir := filepath.Dir(recipeFile)
+	base, err := realpath.Realpath(dir)
+	if err != nil {
+		return err
+	}
+	app.Basepath = base
+
+	if err := L.DoFile(recipeFile); err != nil {
+		return err
+	}
+
+	return nil
 }
