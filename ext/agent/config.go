@@ -12,8 +12,6 @@ type Config struct {
 	configFile string       `toml:"-" json:"configFile"`
 }
 
-var SystemAuthorizedKeysFile = "/etc/cofu-agent/authorized_keys"
-
 type AgentConfig struct {
 	LogLevel           string   `toml:"log_level" json:"log_level"`
 	Addr               string   `toml:"addr" json:"addr"`
@@ -33,11 +31,15 @@ type IncludeConfig struct {
 	Files []string `toml:"files" json:"files"`
 }
 
+const (
+	DefaultAgentPort = 2222
+)
+
 func NewConfig() *Config {
 	return &Config{
 		Agent: &AgentConfig{
 			LogLevel:           "info",
-			Addr:               fmt.Sprintf("0.0.0.0:%d", DefaultPort),
+			Addr:               fmt.Sprintf("0.0.0.0:%d", DefaultAgentPort),
 			AuthorizedKeysFile: "",
 			AuthorizedKeys:     []string{},
 			DisableLocalAuth:   false,
@@ -80,10 +82,6 @@ func (c *Config) Reload() (*Config, error) {
 
 	return newConfig, nil
 }
-
-const (
-	DefaultPort = 2222
-)
 
 func (c *AgentConfig) IDEpochTime() (time.Time, error) {
 	if len(c.IDEpoch) != 3 {

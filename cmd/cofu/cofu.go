@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/kohkimakimoto/cofu/_work/tmp"
-	"github.com/kohkimakimoto/cofu/agent"
 	"github.com/kohkimakimoto/cofu/cofu"
+	"github.com/kohkimakimoto/cofu/ext/agent"
+	"github.com/kohkimakimoto/cofu/ext/server"
 	"github.com/kohkimakimoto/cofu/fetcher"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
@@ -29,7 +30,7 @@ func realMain() (status int) {
 
 	// parse flags...
 	var optE, optLogLevel, optVarJson, optVarJsonFile, optConfigFile string
-	var optVersion, optDryRun, optColor, optNoColor, optAgent, optFetch bool
+	var optVersion, optDryRun, optColor, optNoColor, optServer, optAgent, optFetch bool
 
 	flag.StringVar(&optE, "e", "", "")
 	flag.StringVar(&optLogLevel, "l", "info", "")
@@ -45,7 +46,9 @@ func realMain() (status int) {
 	flag.BoolVar(&optColor, "color", false, "")
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
-	// agent options
+	// server|agent options
+	flag.BoolVar(&optServer, "s", false, "")
+	flag.BoolVar(&optServer, "server", false, "")
 	flag.BoolVar(&optAgent, "a", false, "")
 	flag.BoolVar(&optAgent, "agent", false, "")
 	flag.StringVar(&optConfigFile, "c", "", "")
@@ -68,8 +71,9 @@ Options:
   -v, -version               Print the version
   -color                     Force ANSI output
   -no-color                  Disable ANSI output
+  -s, -server                Runs cofu server
   -a, -agent                 Runs cofu agent
-  -c, -config-file=FILE      Load agent config from the FILE
+  -c, -config-file=FILE      Load server|agent config from the FILE
   -var=JSON                  JSON string to input variables.
   -var-file=JSON_FILE        JSON file to input variables.
 `)
@@ -89,6 +93,17 @@ Options:
 		}
 		return 0
 	}
+
+	if optServer {
+		// run server
+		if err := server.Start(optConfigFile); err != nil {
+			printError(err)
+			return 1
+		}
+
+		return 0
+	}
+
 
 	if optAgent {
 		// run agent

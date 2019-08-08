@@ -451,6 +451,8 @@ func expandEnvironToString(value string, environ []string) string {
 	})
 }
 
+var SystemAuthorizedKeysFile = "/etc/cofu-agent/authorized_keys"
+
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config.Agent
 	logger := a.Logger
