@@ -18,6 +18,7 @@ type Config struct {
 	SandboxesDirectory string   `toml:"sandboxes_directory" json:"sandboxes_directory"`
 	KeepSandboxes      int      `toml:"keep_sandboxes" json:"keep_sandboxes"`
 	Environment        []string `toml:"environment" json:"environment"`
+	EnvironmentFile    string `toml:"environment_file" json:"environment_file"`
 	IDEpoch            []int    `toml:"id_epoch" json:"id_epoch"`
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
 	// Loaed config file
@@ -32,7 +33,7 @@ func NewConfig() *Config {
 	return &Config{
 		LogLevel:           "info",
 		Addr:               fmt.Sprintf("0.0.0.0:%d", DefaultAgentPort),
-		AuthorizedKeysFile: "",
+		AuthorizedKeysFile: "/etc/cofu-agent/authorized_keys",
 		AuthorizedKeys:     []string{},
 		DisableLocalAuth:   false,
 		HostKeyFile:        "",
@@ -40,6 +41,7 @@ func NewConfig() *Config {
 		SandboxesDirectory: "/tmp/cofu-agent/sandboxes",
 		KeepSandboxes:      0,
 		Environment:        []string{},
+		EnvironmentFile:    "/etc/cofu-agent/environment",
 		IDEpoch:            []int{2019, 1, 1},
 		HotReload:          false,
 		configFile:         "",

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/gliderlabs/ssh"
 	"github.com/kohkimakimoto/cofu/cofu"
+	"github.com/kohkimakimoto/cofu/ext/agent/envfile"
 	"github.com/kr/pty"
 	"github.com/pkg/errors"
 	"io"
@@ -154,7 +155,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger.Infof("Allocated session %d", sess.ID)
 	logger.Debugf("The session user is %s", sess.User())
 
-	svEnviron := append(sess.Environ(),
+	currentEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
 		fmt.Sprintf("COFU_AGENT_SESSION_USER=%s", sess.User()),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
@@ -169,10 +170,10 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		commandAndArgs = []string{"/bin/bash"}
 	}
 
-	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SESSION_COMMAND=%s", strings.Join(commandAndArgs, " ")))
+	currentEnviron = append(currentEnviron, fmt.Sprintf("COFU_AGENT_SESSION_COMMAND=%s", strings.Join(commandAndArgs, " ")))
 
 	if isPty {
-		svEnviron = append(svEnviron, "COFU_AGENT_PTY=1")
+		currentEnviron = append(currentEnviron, "COFU_AGENT_PTY=1")
 	}
 
 	// setup user and group
@@ -190,7 +191,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	sess.Gid = gid
 
 	// support forward agent
-	svEnviron, err = takeForwardAgentIfRequested(sess, svEnviron)
+	currentEnviron, err = takeForwardAgentIfRequested(sess, currentEnviron)
 	if err != nil {
 		return err
 	}
@@ -200,11 +201,24 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	if err != nil {
 		return err
 	}
-	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
+	currentEnviron = append(currentEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
 
 	// setup environment variables
+	if a.Config.EnvironmentFile != "" {
+		if _, err := os.Stat(a.Config.EnvironmentFile); err == nil {
+			appendedEnv, err := envfile.Load(a.Config.EnvironmentFile, currentEnviron)
+			if err != nil {
+				logger.Error(err)
+			}
+
+			if appendedEnv != nil {
+				currentEnviron = append(currentEnviron, appendedEnv...)
+			}
+		}
+	}
+
 	for _, v := range a.Config.Environment {
-		svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
+		currentEnviron = append(currentEnviron, expandEnvironToString(v, currentEnviron))
 	}
 
 	command := commandAndArgs[0]
@@ -216,7 +230,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger.Debugf("command: %v", commandAndArgs)
 	// exec command
 	cmd := exec.Command(command, args...)
-	cmd.Env = append(os.Environ(), svEnviron...)
+	cmd.Env = append(currentEnviron, os.Environ()...)
 	if os.Getuid() == 0 {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
@@ -451,39 +465,24 @@ func expandEnvironToString(value string, environ []string) string {
 	})
 }
 
-var SystemAuthorizedKeysFile = "/etc/cofu-agent/authorized_keys"
-
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config
 	logger := a.Logger
 
 	var keysdata []byte
 
-	if SystemAuthorizedKeysFile != config.AuthorizedKeysFile {
-		if _, err := os.Stat(SystemAuthorizedKeysFile); err == nil {
-			data, err := ioutil.ReadFile(SystemAuthorizedKeysFile)
+	if config.AuthorizedKeysFile != "" {
+		if _, err := os.Stat(config.AuthorizedKeysFile); err == nil {
+			data, err := ioutil.ReadFile(config.AuthorizedKeysFile)
 			if err != nil {
 				logger.Error(err)
 				return false
 			}
 
 			keysdata = append(keysdata, data...)
-			if len(keysdata) != 0 && keysdata[len(keysdata)-1] != '\n' {
+			if len(keysdata) != 0 || keysdata[len(keysdata)-1] != '\n' {
 				keysdata = append(keysdata, '\n')
 			}
-		}
-	}
-
-	if config.AuthorizedKeysFile != "" {
-		data, err := ioutil.ReadFile(config.AuthorizedKeysFile)
-		if err != nil {
-			logger.Error(err)
-			return false
-		}
-
-		keysdata = append(keysdata, data...)
-		if len(keysdata) != 0 || keysdata[len(keysdata)-1] != '\n' {
-			keysdata = append(keysdata, '\n')
 		}
 	}
 
