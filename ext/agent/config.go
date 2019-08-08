@@ -8,11 +8,6 @@ import (
 )
 
 type Config struct {
-	Agent      *AgentConfig `toml:"agent" json:"agent"`
-	configFile string       `toml:"-" json:"configFile"`
-}
-
-type AgentConfig struct {
 	LogLevel           string   `toml:"log_level" json:"log_level"`
 	Addr               string   `toml:"addr" json:"addr"`
 	AuthorizedKeysFile string   `toml:"authorized_keys_file" json:"authorized_keys_file"`
@@ -25,10 +20,8 @@ type AgentConfig struct {
 	Environment        []string `toml:"environment" json:"environment"`
 	IDEpoch            []int    `toml:"id_epoch" json:"id_epoch"`
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
-}
-
-type IncludeConfig struct {
-	Files []string `toml:"files" json:"files"`
+	// Loaed config file
+	configFile string `toml:"-" json:"configFile"`
 }
 
 const (
@@ -37,21 +30,19 @@ const (
 
 func NewConfig() *Config {
 	return &Config{
-		Agent: &AgentConfig{
-			LogLevel:           "info",
-			Addr:               fmt.Sprintf("0.0.0.0:%d", DefaultAgentPort),
-			AuthorizedKeysFile: "",
-			AuthorizedKeys:     []string{},
-			DisableLocalAuth:   false,
-			HostKeyFile:        "",
-			HostKey:            "",
-			SandboxesDirectory: "/tmp/cofu-agent/sandboxes",
-			KeepSandboxes:      0,
-			Environment:        []string{},
-			IDEpoch:            []int{2019, 1, 1},
-			HotReload:          false,
-		},
-		configFile: "",
+		LogLevel:           "info",
+		Addr:               fmt.Sprintf("0.0.0.0:%d", DefaultAgentPort),
+		AuthorizedKeysFile: "",
+		AuthorizedKeys:     []string{},
+		DisableLocalAuth:   false,
+		HostKeyFile:        "",
+		HostKey:            "",
+		SandboxesDirectory: "/tmp/cofu-agent/sandboxes",
+		KeepSandboxes:      0,
+		Environment:        []string{},
+		IDEpoch:            []int{2019, 1, 1},
+		HotReload:          false,
+		configFile:         "",
 	}
 }
 
@@ -61,12 +52,12 @@ func (c *Config) LoadConfigFile(path string) error {
 		return err
 	}
 
-	if !filepath.IsAbs(c.Agent.SandboxesDirectory) {
-		d, err := filepath.Abs(c.Agent.SandboxesDirectory)
+	if !filepath.IsAbs(c.SandboxesDirectory) {
+		d, err := filepath.Abs(c.SandboxesDirectory)
 		if err != nil {
 			return err
 		}
-		c.Agent.SandboxesDirectory = d
+		c.SandboxesDirectory = d
 	}
 
 	c.configFile = path
@@ -83,7 +74,7 @@ func (c *Config) Reload() (*Config, error) {
 	return newConfig, nil
 }
 
-func (c *AgentConfig) IDEpochTime() (time.Time, error) {
+func (c *Config) IDEpochTime() (time.Time, error) {
 	if len(c.IDEpoch) != 3 {
 		return time.Now(), fmt.Errorf("id_epoch must be 3 int values")
 	}

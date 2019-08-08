@@ -3,23 +3,19 @@ package server
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"path/filepath"
 	"time"
 )
 
 type Config struct {
-	Server     *ServerConfig `toml:"server" json:"server"`
-	configFile string        `toml:"-" json:"configFile"`
-}
-
-type ServerConfig struct {
-	LogLevel      string `toml:"log_level" json:"log_level"`
-	Addr          string `toml:"addr" json:"addr"`
-	Logfile       string `toml:"log_file"`
-	DataDir       string `toml:"data_dir"`
-	AccessLogfile string `toml:"access_log_file"`
-	ShutdownTimeout     int64  `toml:"shutdown_timeout"`
-	IDEpoch       []int  `toml:"id_epoch" json:"id_epoch"`
+	LogLevel        string `toml:"log_level" json:"log_level"`
+	Addr            string `toml:"addr" json:"addr"`
+	Logfile         string `toml:"log_file"`
+	DataDir         string `toml:"data_dir"`
+	AccessLogfile   string `toml:"access_log_file"`
+	ShutdownTimeout int64  `toml:"shutdown_timeout"`
+	IDEpoch         []int  `toml:"id_epoch" json:"id_epoch"`
+	// Loaed config file
+	configFile string `toml:"-" json:"configFile"`
 }
 
 const (
@@ -28,16 +24,14 @@ const (
 
 func NewConfig() *Config {
 	return &Config{
-		Server: &ServerConfig{
-			LogLevel:      "info",
-			Addr:          fmt.Sprintf("0.0.0.0:%d", DefaultPort),
-			Logfile:       "",
-			DataDir:       "",
-			AccessLogfile: "",
-			ShutdownTimeout: 10,
-			IDEpoch:       []int{2019, 1, 1},
-		},
-		configFile: "",
+		LogLevel:        "info",
+		Addr:            fmt.Sprintf("0.0.0.0:%d", DefaultPort),
+		Logfile:         "",
+		DataDir:         "",
+		AccessLogfile:   "",
+		ShutdownTimeout: 10,
+		IDEpoch:         []int{2019, 1, 1},
+		configFile:      "",
 	}
 }
 
@@ -47,20 +41,12 @@ func (c *Config) LoadConfigFile(path string) error {
 		return err
 	}
 
-	if !filepath.IsAbs(c.Server.DataDir) {
-		d, err := filepath.Abs(c.Server.DataDir)
-		if err != nil {
-			return err
-		}
-		c.Server.DataDir = d
-	}
-
 	c.configFile = path
 
 	return nil
 }
 
-func (c *ServerConfig) IDEpochTime() (time.Time, error) {
+func (c *Config) IDEpochTime() (time.Time, error) {
 	if len(c.IDEpoch) != 3 {
 		return time.Now(), fmt.Errorf("id_epoch must be 3 int values")
 	}

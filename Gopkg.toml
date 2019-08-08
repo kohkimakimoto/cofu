@@ -91,7 +91,7 @@
 
 [[constraint]]
   name = "github.com/labstack/echo"
-  version = "4.1.8"
+  version = "3.3.10"
 
 [[constraint]]
   name = "github.com/labstack/gommon"

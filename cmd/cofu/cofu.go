@@ -104,7 +104,6 @@ Options:
 		return 0
 	}
 
-
 	if optAgent {
 		// run agent
 		if err := agent.Start(optConfigFile); err != nil {

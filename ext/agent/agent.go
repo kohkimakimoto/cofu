@@ -47,12 +47,13 @@ func NewAgent(config *Config) *Agent {
 	logger.SetHeader(`${time_rfc3339} ${prefix} ${level}`)
 
 	// set log level
-	lv, err := logutil.LoglvlFromString(config.Agent.LogLevel)
+	lv, err := logutil.LoglvlFromString(config.LogLevel)
 	if err != nil {
 		logger.Warn(err)
 	}
 	logger.SetLevel(lv)
 
+	// create agent instance
 	srv := &Agent{
 		Config: config,
 		Logger: logger,
@@ -66,7 +67,7 @@ func (a *Agent) Close() {
 }
 
 func (a *Agent) Start() error {
-	config := a.Config.Agent
+	config := a.Config
 	logger := a.Logger
 
 	logger.Info("Starting cofu-agent")
@@ -116,7 +117,7 @@ func (a *Agent) Start() error {
 }
 
 func (a *Agent) SandBoxesUserDir(username string) string {
-	return filepath.Join(a.Config.Agent.SandboxesDirectory, username)
+	return filepath.Join(a.Config.SandboxesDirectory, username)
 }
 
 func (a *Agent) SandBoxDir(username string, sessId uint64) string {

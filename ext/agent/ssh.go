@@ -63,7 +63,7 @@ func startSSHServer(a *Agent) error {
 	var options []ssh.Option
 
 	publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-		if a.Config.Agent.HotReload {
+		if a.Config.HotReload {
 			config, err := a.Config.Reload()
 			if err != nil {
 				logger.Errorf("failed to reload config: %v", err)
@@ -77,7 +77,7 @@ func startSSHServer(a *Agent) error {
 		logger.Debugf("remoteAddr: %s", remoteAddr)
 		logger.Debugf("remoteHost: %s", remoteHost)
 
-		if a.Config.Agent.DisableLocalAuth && (remoteHost == "127.0.0.1" || remoteHost == "[::1]") {
+		if a.Config.DisableLocalAuth && (remoteHost == "127.0.0.1" || remoteHost == "[::1]") {
 			logger.Debugf("passed public key auth because the config disables local auth")
 			return true
 		}
@@ -91,24 +91,24 @@ func startSSHServer(a *Agent) error {
 
 	options = append(options, publicKeyOption)
 
-	if a.Config.Agent.HostKeyFile != "" {
-		if _, err := os.Stat(a.Config.Agent.HostKeyFile); os.IsNotExist(err) {
+	if a.Config.HostKeyFile != "" {
+		if _, err := os.Stat(a.Config.HostKeyFile); os.IsNotExist(err) {
 			b, err := generateNewKey()
 			if err != nil {
 				return err
 			}
-			if err := ioutil.WriteFile(a.Config.Agent.HostKeyFile, b, 0600); err != nil {
+			if err := ioutil.WriteFile(a.Config.HostKeyFile, b, 0600); err != nil {
 				return err
 			}
-			logger.Infof("%s is not existed. generated it automatically.", a.Config.Agent.HostKeyFile)
+			logger.Infof("%s is not existed. generated it automatically.", a.Config.HostKeyFile)
 		}
 
-		hostKeyOption := ssh.HostKeyFile(a.Config.Agent.HostKeyFile)
+		hostKeyOption := ssh.HostKeyFile(a.Config.HostKeyFile)
 		options = append(options, hostKeyOption)
 
-		logger.Infof("Using host key file %s", a.Config.Agent.HostKeyFile)
-	} else if a.Config.Agent.HostKey != "" {
-		hostKeyOption := ssh.HostKeyPEM([]byte(a.Config.Agent.HostKey))
+		logger.Infof("Using host key file %s", a.Config.HostKeyFile)
+	} else if a.Config.HostKey != "" {
+		hostKeyOption := ssh.HostKeyPEM([]byte(a.Config.HostKey))
 		options = append(options, hostKeyOption)
 
 		logger.Info("Using host key from the config file")
@@ -130,10 +130,10 @@ func startSSHServer(a *Agent) error {
 		logger.Infof("Using host key file %s", hostKeyFile)
 	}
 
-	logger.Infof("Starting SSH protocol server on %s", a.Config.Agent.Addr)
+	logger.Infof("Starting SSH protocol server on %s", a.Config.Addr)
 
 	// start ssh server
-	return ssh.ListenAndServe(a.Config.Agent.Addr, nil, options...)
+	return ssh.ListenAndServe(a.Config.Addr, nil, options...)
 }
 
 func handleSSHSession(a *Agent, sshSession ssh.Session) error {
@@ -203,7 +203,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	svEnviron = append(svEnviron, fmt.Sprintf("COFU_AGENT_SANDBOX_DIR=%s", sandBoxDir))
 
 	// setup environment variables
-	for _, v := range a.Config.Agent.Environment {
+	for _, v := range a.Config.Environment {
 		svEnviron = append(svEnviron, expandEnvironToString(v, svEnviron))
 	}
 
@@ -454,7 +454,7 @@ func expandEnvironToString(value string, environ []string) string {
 var SystemAuthorizedKeysFile = "/etc/cofu-agent/authorized_keys"
 
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
-	config := a.Config.Agent
+	config := a.Config
 	logger := a.Logger
 
 	var keysdata []byte

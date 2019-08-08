@@ -105,7 +105,7 @@ func (m *SessionManager) RemoveOldSandboxes(username string) {
 	agt := m.Agt
 	logger := agt.Logger
 
-	if agt.Config.Agent.KeepSandboxes == 0 {
+	if agt.Config.KeepSandboxes == 0 {
 		return
 	}
 
@@ -116,7 +116,7 @@ func (m *SessionManager) RemoveOldSandboxes(username string) {
 	}
 
 	count := len(files)
-	keeps := agt.Config.Agent.KeepSandboxes
+	keeps := agt.Config.KeepSandboxes
 	removes := 0
 	if keeps > 0 {
 		removes = count - keeps

@@ -127,6 +127,14 @@
   version = "v1.1.7"
 
 [[projects]]
+  digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
   name = "github.com/fatih/color"
   packages = ["."]
@@ -296,19 +304,24 @@
   version = "v1.1.8"
 
 [[projects]]
-  digest = "1:52dc7eebfea7a2a73eb47858a6c0cba2d4f7dd31467e40ac550486ad71642f0f"
+  digest = "1:efd601ad1d1189884f37ed075fadb5bbd17f1f5acf5862827247c6da56d125ba"
   name = "github.com/labstack/echo"
-  packages = ["."]
+  packages = [
+    ".",
+    "middleware",
+  ]
   pruneopts = "UT"
-  revision = "09d415cefca8c1d470a80566f344d98652ba5728"
-  version = "v4.1.8"
+  revision = "38772c686c76b501f94bd6cd5b77f5842e93b559"
+  version = "v3.3.10"
 
 [[projects]]
-  digest = "1:9bc108827ac1d8783dea294f1ef07732fa4ca7d6e20518c04888a85828eba4ce"
+  digest = "1:6e15357cae900fa1a8015c7fc9efdb406f72b644549a3422f3f1b7f465836a84"
   name = "github.com/labstack/gommon"
   packages = [
+    "bytes",
     "color",
     "log",
+    "random",
   ]
   pruneopts = "UT"
   revision = "ab0bfd9a5eba33a8c364bf3390d809ed23c31f97"
@@ -710,6 +723,7 @@
     "github.com/kohkimakimoto/loglv",
     "github.com/kr/pty",
     "github.com/labstack/echo",
+    "github.com/labstack/echo/middleware",
     "github.com/labstack/gommon/log",
     "github.com/mitchellh/mapstructure",
     "github.com/otm/gluash",
