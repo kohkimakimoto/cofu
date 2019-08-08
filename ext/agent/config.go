@@ -18,7 +18,7 @@ type Config struct {
 	SandboxesDirectory string   `toml:"sandboxes_directory" json:"sandboxes_directory"`
 	KeepSandboxes      int      `toml:"keep_sandboxes" json:"keep_sandboxes"`
 	Environment        []string `toml:"environment" json:"environment"`
-	EnvironmentFile    string `toml:"environment_file" json:"environment_file"`
+	EnvironmentFile    string   `toml:"environment_file" json:"environment_file"`
 	IDEpoch            []int    `toml:"id_epoch" json:"id_epoch"`
 	HotReload          bool     `toml:"hot_reload" json:"hot_reload"`
 	// Loaed config file

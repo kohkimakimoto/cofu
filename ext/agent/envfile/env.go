@@ -149,7 +149,7 @@ func loadFile(filename string, overload bool, currentRawEnv []string) ([]string,
 
 	for key, value := range envMap {
 		if !currentEnv[key] || overload {
-			retRawEnv = append(retRawEnv, fmt.Sprintf("%s=%s",key, value))
+			retRawEnv = append(retRawEnv, fmt.Sprintf("%s=%s", key, value))
 		}
 	}
 
