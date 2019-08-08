@@ -35,11 +35,6 @@ func (m *SessionManager) SetSession(sess *Session) int {
 		sessMapPerService = map[uint64]*Session{}
 	}
 
-	//max := srv.MaxProcesses
-	//if max > 0 && len(sessMapPerService) >= max {
-	//	return fmt.Errorf("Limit of max_processes: %d", max)
-	//}
-
 	sessMapPerService[sess.ID] = sess
 	m.Sessions[sess.User()] = sessMapPerService
 

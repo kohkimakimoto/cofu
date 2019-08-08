@@ -9,8 +9,8 @@ import (
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/labstack/gommon/log"
-	"github.com/yuin/gopher-lua"
 	"github.com/yookoala/realpath"
+	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -64,7 +64,7 @@ func NewApp() *App {
 		Level:          0,
 		LogHeader:      defaultLogHeader,
 		BuiltinRecipes: map[string]string{},
-		Basepath: "",
+		Basepath:       "",
 	}
 }
 
@@ -382,7 +382,6 @@ func (app *App) IsRootApp() bool {
 	return app.Level == 0
 }
 
-
 func (app *App) LoadUserResources() error {
 	return nil
 }
@@ -456,7 +455,7 @@ func getBasepath(L *lua.LState) string {
 
 func loadRecipeFile(recipeFile string, L *lua.LState, app *App) error {
 	orgBase := app.Basepath
-	defer func () {
+	defer func() {
 		app.Basepath = orgBase
 	}()
 

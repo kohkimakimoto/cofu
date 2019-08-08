@@ -11,6 +11,7 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kr/pty"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net"
@@ -175,19 +176,30 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 
 	// setup user and group
-	var uid, gid int
-	if os.Getuid() == 0 {
-		uid, gid, err = getUidAndGidFromUsername(sess.User())
-		if err != nil {
-			return err
-		}
-
-		logger.Debugf("This session will run by user: %d, group: %d", uid, gid)
-	} else {
-		logger.Debug("The cofu is running non root user. The service can be executed only by same user who runs cofu.")
-		uid = os.Getuid()
-		gid = os.Getgid()
+	uid, gid, err := getUidAndGidFromUsername(sess.User())
+	if err != nil {
+		return err
 	}
+	logger.Debugf("This session runs by user: %d, group: %d", uid, gid)
+
+	if os.Getuid() != 0 && os.Getuid() != uid {
+		return errors.New("The cofu is running non root user. The connection can be accepted only by same user who runs cofu.")
+	}
+
+	//var uid, gid int
+	//if os.Getuid() == 0 {
+	//	uid, gid, err = getUidAndGidFromUsername(sess.User())
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	logger.Debugf("This session will run by user: %d, group: %d", uid, gid)
+	//} else {
+	//	logger.Debug("The cofu is running non root user. The service can be executed only by same user who runs cofu.")
+	//	uid = os.Getuid()
+	//	gid = os.Getgid()
+	//}
+
 	sess.Uid = uid
 	sess.Gid = gid
 

@@ -189,7 +189,7 @@ func fnRunCommand(L *lua.LState) int {
 }
 
 func fnIncludeRecipe(app *App) lua.LGFunction {
-	return func (L *lua.LState) int {
+	return func(L *lua.LState) int {
 		path := L.CheckString(1)
 
 		if !filepath.IsAbs(path) {
