@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 )
 
@@ -30,28 +31,41 @@ func (m *SessionManager) SetSession(sess *Session) int {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sessMapPerService, ok := m.Sessions[sess.User()]
+	sessMapPerUsername, ok := m.Sessions[sess.User()]
 	if !ok {
-		sessMapPerService = map[uint64]*Session{}
+		sessMapPerUsername = map[uint64]*Session{}
 	}
 
-	sessMapPerService[sess.ID] = sess
-	m.Sessions[sess.User()] = sessMapPerService
+	sessMapPerUsername[sess.ID] = sess
+	m.Sessions[sess.User()] = sessMapPerUsername
 
-	return len(sessMapPerService)
+	return len(sessMapPerUsername)
+}
+
+func (m *SessionManager) HasSession(username string, sessionID uint64) bool {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	sessMapPerUsername, ok := m.Sessions[username]
+	if !ok {
+		return false
+	}
+
+	_, ok = sessMapPerUsername[sessionID]
+	return ok
 }
 
 func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sessMapPerService, ok := m.Sessions[sess.User()]
+	sessMapPerUsername, ok := m.Sessions[sess.User()]
 	if !ok {
 		return
 	}
 
-	delete(sessMapPerService, sess.ID)
-	m.Sessions[sess.User()] = sessMapPerService
+	delete(sessMapPerUsername, sess.ID)
+	m.Sessions[sess.User()] = sessMapPerUsername
 }
 
 type Session struct {
@@ -84,18 +98,18 @@ func (sess *Session) Terminate() {
 	}
 
 	sess.Agt.SessionManager.RemoveSession(sess)
-	sess.RemoveSandboxes()
+	sess.Agt.SessionManager.RemoveOldSandboxes(sess.User())
 }
 
-func (sess *Session) RemoveSandboxes() {
-	agt := sess.Agt
+func (m *SessionManager) RemoveOldSandboxes(username string) {
+	agt := m.Agt
 	logger := agt.Logger
 
 	if agt.Config.Agent.KeepSandboxes == 0 {
 		return
 	}
 
-	sandboxesDir := agt.SandBoxesUserDir(sess.User())
+	sandboxesDir := agt.SandBoxesUserDir(username)
 	files, err := ioutil.ReadDir(sandboxesDir)
 	if err != nil {
 		logger.Error(err)
@@ -111,13 +125,24 @@ func (sess *Session) RemoveSandboxes() {
 		}
 	}
 
-	logger.Debugf("%s sandbox(es): %d", sess.User(), count)
-	logger.Debugf("%s keeps: %d", sess.User(), keeps)
-	logger.Debugf("%s removes: %d", sess.User(), removes)
+	logger.Debugf("session %s sandbox(es): %d", username, count)
+	logger.Debugf("session %s keeps: %d", username, keeps)
+	logger.Debugf("session %s removes: %d", username, removes)
 
 	for i := 0; i < removes; i++ {
 		file := files[i]
-		sandboxPath := filepath.Join(sandboxesDir, file.Name())
+		fileName := file.Name()
+		sessionId, err := strconv.ParseUint(fileName, 10, 64)
+		if err != nil {
+			logger.Error(err)
+		}
+
+		if m.HasSession(username, sessionId) {
+			logger.Debugf("skipped %v. because this is active session", fileName)
+			continue
+		}
+
+		sandboxPath := filepath.Join(sandboxesDir, fileName)
 		if err := os.RemoveAll(sandboxPath); err != nil {
 			logger.Error(err)
 		}

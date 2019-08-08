@@ -12,6 +12,8 @@ type Config struct {
 	configFile string       `toml:"-" json:"configFile"`
 }
 
+var SystemAuthorizedKeysFile = "/etc/cofu-agent/authorized_keys"
+
 type AgentConfig struct {
 	LogLevel           string   `toml:"log_level" json:"log_level"`
 	Addr               string   `toml:"addr" json:"addr"`

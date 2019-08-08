@@ -186,20 +186,6 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		return errors.New("The cofu is running non root user. The connection can be accepted only by same user who runs cofu.")
 	}
 
-	//var uid, gid int
-	//if os.Getuid() == 0 {
-	//	uid, gid, err = getUidAndGidFromUsername(sess.User())
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	logger.Debugf("This session will run by user: %d, group: %d", uid, gid)
-	//} else {
-	//	logger.Debug("The cofu is running non root user. The service can be executed only by same user who runs cofu.")
-	//	uid = os.Getuid()
-	//	gid = os.Getgid()
-	//}
-
 	sess.Uid = uid
 	sess.Gid = gid
 
@@ -471,21 +457,39 @@ func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 
 	var keysdata []byte
 
-	authorizedKeysFile := config.AuthorizedKeysFile
+	if SystemAuthorizedKeysFile != config.AuthorizedKeysFile {
+		if _, err := os.Stat(SystemAuthorizedKeysFile); err == nil {
+			data, err := ioutil.ReadFile(SystemAuthorizedKeysFile)
+			if err != nil {
+				logger.Error(err)
+				return false
+			}
 
-	if authorizedKeysFile != "" {
-		data, err := ioutil.ReadFile(authorizedKeysFile)
+			keysdata = append(keysdata, data...)
+			if len(keysdata) != 0 && keysdata[len(keysdata)-1] != '\n' {
+				keysdata = append(keysdata, '\n')
+			}
+		}
+	}
+
+	if config.AuthorizedKeysFile != "" {
+		data, err := ioutil.ReadFile(config.AuthorizedKeysFile)
 		if err != nil {
 			logger.Error(err)
 			return false
 		}
 
-		keysdata = data
+		keysdata = append(keysdata, data...)
+		if len(keysdata) != 0 || keysdata[len(keysdata)-1] != '\n' {
+			keysdata = append(keysdata, '\n')
+		}
 	}
 
 	for _, s := range config.AuthorizedKeys {
 		keysdata = append(keysdata, []byte(s+"\n")...)
 	}
+
+	logger.Debugf("authorized_keys\n---start---\n%s---end---", string(keysdata))
 
 	scanner := bufio.NewScanner(bytes.NewBuffer(keysdata))
 	for scanner.Scan() {
