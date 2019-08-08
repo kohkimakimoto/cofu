@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// Now, this is not used.
+
 var Git = &cofu.ResourceType{
 	Name: "git",
 	Attributes: []cofu.Attribute{
