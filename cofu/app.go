@@ -63,7 +63,6 @@ func NewApp() *App {
 		Parent:         nil,
 		Level:          0,
 		LogHeader:      defaultLogHeader,
-		BuiltinRecipes: map[string]string{},
 		Basepath:       "",
 	}
 }

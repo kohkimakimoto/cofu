@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kohkimakimoto/cofu/_work/tmp"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/ext/agent"
 	"github.com/kohkimakimoto/cofu/fetcher"
@@ -158,7 +157,6 @@ Options:
 	app.Logger = logger
 
 	app.ResourceTypes = resource.ResourceTypes
-	app.BuiltinRecipes = tmp.DefaultBuiltinRecipes
 
 	if optVarJsonFile != "" {
 		if err := app.LoadVariableFromJSONFile(optVarJsonFile); err != nil {
