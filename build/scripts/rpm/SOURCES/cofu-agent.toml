@@ -9,6 +9,9 @@ log_level = "info"
 # addr
 addr = "0.0.0.0:2222"
 
+# authorized_keys_file
+authorized_keys_file = "/etc/cofu-agent/authorized_keys"
+
 # authorized_keys
 # authorized_keys = []
 
@@ -26,6 +29,9 @@ keep_sandboxes = 5
 
 # disable_local_auth. This config is for development purpose. You should not set true in the production environment.
 disable_local_auth = false
+
+# environment_file
+environment_file = "/etc/cofu-agent/environment"
 
 # environment
 # environment = []
