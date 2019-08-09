@@ -9,20 +9,20 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
+	"strings"
 	"sync"
 )
 
 type SessionManager struct {
 	Agt      *Agent
-	Sessions map[string]map[uint64]*Session
+	Sessions map[uint64]*Session
 	mutex    *sync.Mutex
 }
 
 func NewSessionManager(a *Agent) *SessionManager {
 	return &SessionManager{
 		Agt:      a,
-		Sessions: map[string]map[uint64]*Session{},
+		Sessions: map[uint64]*Session{},
 		mutex:    new(sync.Mutex),
 	}
 }
@@ -31,46 +31,43 @@ func (m *SessionManager) SetSession(sess *Session) int {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sessMapPerUsername, ok := m.Sessions[sess.User()]
-	if !ok {
-		sessMapPerUsername = map[uint64]*Session{}
-	}
+	m.Sessions[sess.ID] = sess
 
-	sessMapPerUsername[sess.ID] = sess
-	m.Sessions[sess.User()] = sessMapPerUsername
-
-	return len(sessMapPerUsername)
+	return len(m.Sessions)
 }
 
-func (m *SessionManager) HasSession(username string, sessionID uint64) bool {
+func (m *SessionManager) HasSession(sessionID uint64) bool {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sessMapPerUsername, ok := m.Sessions[username]
-	if !ok {
-		return false
+	_, ok := m.Sessions[sessionID]
+	return ok
+}
+
+func (m *SessionManager) IsActiveSandbox(sandboxName string) bool {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	for _, session := range m.Sessions {
+		if session.SandboxName == sandboxName {
+			return true
+		}
 	}
 
-	_, ok = sessMapPerUsername[sessionID]
-	return ok
+	return false
 }
 
 func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sessMapPerUsername, ok := m.Sessions[sess.User()]
-	if !ok {
-		return
-	}
-
-	delete(sessMapPerUsername, sess.ID)
-	m.Sessions[sess.User()] = sessMapPerUsername
+	delete(m.Sessions, sess.ID)
 }
 
 type Session struct {
 	ssh.Session
 	ID                   uint64
+	SandboxName          string
 	Agt                  *Agent
 	Uid                  int
 	Gid                  int
@@ -83,10 +80,23 @@ func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
 		return nil, err
 	}
 
+	sandboxName := fmt.Sprintf("%d", id)
+	for _, envLine := range sshSession.Environ() {
+		envItem := strings.SplitN(envLine, "=", 2)
+		if len(envItem) == 2 {
+			key := envItem[0]
+			value := envItem[1]
+			if key == "COFU_AGENT_SANDBOX_NAME" {
+				sandboxName = value
+			}
+		}
+	}
+
 	sess := &Session{
-		Session: sshSession,
-		ID:      id,
-		Agt:     a,
+		Session:     sshSession,
+		ID:          id,
+		SandboxName: sandboxName,
+		Agt:         a,
 	}
 
 	return sess, nil
@@ -98,10 +108,10 @@ func (sess *Session) Terminate() {
 	}
 
 	sess.Agt.SessionManager.RemoveSession(sess)
-	sess.Agt.SessionManager.RemoveOldSandboxes(sess.User())
+	sess.Agt.SessionManager.RemoveOldSandboxes()
 }
 
-func (m *SessionManager) RemoveOldSandboxes(username string) {
+func (m *SessionManager) RemoveOldSandboxes() {
 	agt := m.Agt
 	logger := agt.Logger
 
@@ -109,7 +119,7 @@ func (m *SessionManager) RemoveOldSandboxes(username string) {
 		return
 	}
 
-	sandboxesDir := agt.SandBoxesUserDir(username)
+	sandboxesDir := agt.Config.SandboxesDirectory
 	files, err := ioutil.ReadDir(sandboxesDir)
 	if err != nil {
 		logger.Error(err)
@@ -125,24 +135,20 @@ func (m *SessionManager) RemoveOldSandboxes(username string) {
 		}
 	}
 
-	logger.Debugf("session %s sandbox(es): %d", username, count)
-	logger.Debugf("session %s keeps: %d", username, keeps)
-	logger.Debugf("session %s removes: %d", username, removes)
+	logger.Debugf("sandbox(es): %d", count)
+	logger.Debugf("keeps: %d", keeps)
+	logger.Debugf("removes: %d", removes)
 
 	for i := 0; i < removes; i++ {
 		file := files[i]
-		fileName := file.Name()
-		sessionId, err := strconv.ParseUint(fileName, 10, 64)
-		if err != nil {
-			logger.Error(err)
-		}
+		sandboxName := file.Name()
 
-		if m.HasSession(username, sessionId) {
-			logger.Debugf("skipped %v. because this is active session", fileName)
+		if m.IsActiveSandbox(sandboxName) {
+			logger.Debugf("skipped to delete %s. because this is active sandbox", sandboxName)
 			continue
 		}
 
-		sandboxPath := filepath.Join(sandboxesDir, fileName)
+		sandboxPath := filepath.Join(sandboxesDir, sandboxName)
 		if err := os.RemoveAll(sandboxPath); err != nil {
 			logger.Error(err)
 		}

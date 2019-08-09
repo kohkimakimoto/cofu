@@ -116,37 +116,14 @@ func (a *Agent) Start() error {
 	return nil
 }
 
-func (a *Agent) SandBoxesUserDir(username string) string {
-	return filepath.Join(a.Config.SandboxesDirectory, username)
-}
-
-func (a *Agent) SandBoxDir(username string, sessId uint64) string {
-	return filepath.Join(a.SandBoxesUserDir(username), fmt.Sprintf("%d", sessId))
-}
-
 func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	defaultUmask := syscall.Umask(0)
 	defer syscall.Umask(defaultUmask)
 
-	sessId := sess.ID
-	username := sess.User()
-
-	userDir := a.SandBoxesUserDir(username)
-	if _, err := os.Stat(userDir); os.IsNotExist(err) {
-		err = os.MkdirAll(userDir, os.FileMode(0755))
-		if err != nil {
-			return "", err
-		}
-	}
-
-	sandBoxDir := a.SandBoxDir(username, sessId)
+	sandBoxDir := filepath.Join(a.Config.SandboxesDirectory, sess.SandboxName)
 	if _, err := os.Stat(sandBoxDir); os.IsNotExist(err) {
-		err = os.MkdirAll(sandBoxDir, os.FileMode(0755))
+		err = os.MkdirAll(sandBoxDir, os.FileMode(0777))
 		if err != nil {
-			return "", err
-		}
-
-		if err := os.Chown(sandBoxDir, sess.Uid, sess.Gid); err != nil {
 			return "", err
 		}
 	}

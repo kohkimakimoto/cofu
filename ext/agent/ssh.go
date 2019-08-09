@@ -160,6 +160,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		fmt.Sprintf("COFU_AGENT_SESSION_USER=%s", sess.User()),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
 		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
+		fmt.Sprintf("COFU_AGENT_SANDBOX_NAME=%s", sess.SandboxName),
 		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
 	)
 
