@@ -9,70 +9,69 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type SessionManager struct {
 	Agt      *Agent
-	Sessions map[string]map[uint64]*Session
+	Sessions map[uint64]*Session
 	mutex    *sync.Mutex
 }
 
 func NewSessionManager(a *Agent) *SessionManager {
 	return &SessionManager{
 		Agt:      a,
-		Sessions: map[string]map[uint64]*Session{},
+		Sessions: map[uint64]*Session{},
 		mutex:    new(sync.Mutex),
 	}
 }
 
-func (m *SessionManager) SetSession(sess *Session) error {
+func (m *SessionManager) SetSession(sess *Session) int {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	srv := sess.ServiceConfig
-	sessMapPerService, ok := m.Sessions[srv.Name]
-	if !ok {
-		sessMapPerService = map[uint64]*Session{}
+	m.Sessions[sess.ID] = sess
+
+	return len(m.Sessions)
+}
+
+func (m *SessionManager) HasSession(sessionID uint64) bool {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	_, ok := m.Sessions[sessionID]
+	return ok
+}
+
+func (m *SessionManager) IsActiveSandbox(sandboxName string) bool {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	for _, session := range m.Sessions {
+		if session.SandboxName == sandboxName {
+			return true
+		}
 	}
 
-	max := srv.MaxProcesses
-	if max > 0 && len(sessMapPerService) >= max {
-		return fmt.Errorf("Limit of max_processes: %d", max)
-	}
-
-	sessMapPerService[sess.ID] = sess
-	m.Sessions[srv.Name] = sessMapPerService
-
-	return nil
+	return false
 }
 
 func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	srv := sess.ServiceConfig
-	if srv == nil {
-		return
-	}
-
-	sessMapPerService, ok := m.Sessions[srv.Name]
-	if !ok {
-		return
-	}
-
-	delete(sessMapPerService, sess.ID)
-	m.Sessions[srv.Name] = sessMapPerService
+	delete(m.Sessions, sess.ID)
 }
 
 type Session struct {
 	ssh.Session
 	ID                   uint64
+	SandboxName          string
 	Agt                  *Agent
 	Uid                  int
 	Gid                  int
 	ForwardAgentListener net.Listener
-	ServiceConfig        *ServiceConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
@@ -81,10 +80,23 @@ func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
 		return nil, err
 	}
 
+	sandboxName := fmt.Sprintf("%d", id)
+	for _, envLine := range sshSession.Environ() {
+		envItem := strings.SplitN(envLine, "=", 2)
+		if len(envItem) == 2 {
+			key := envItem[0]
+			value := envItem[1]
+			if key == "COFU_AGENT_SANDBOX_NAME" {
+				sandboxName = value
+			}
+		}
+	}
+
 	sess := &Session{
-		Session: sshSession,
-		ID:      id,
-		Agt:     a,
+		Session:     sshSession,
+		ID:          id,
+		SandboxName: sandboxName,
+		Agt:         a,
 	}
 
 	return sess, nil
@@ -96,33 +108,25 @@ func (sess *Session) Terminate() {
 	}
 
 	sess.Agt.SessionManager.RemoveSession(sess)
-	sess.RemoveSandboxes()
+	sess.Agt.SessionManager.RemoveOldSandboxes()
 }
 
-func (sess *Session) RemoveSandboxes() {
-	agt := sess.Agt
+func (m *SessionManager) RemoveOldSandboxes() {
+	agt := m.Agt
 	logger := agt.Logger
-	srv := sess.ServiceConfig
-	if srv == nil {
+
+	if agt.Config.KeepSandboxes == 0 {
 		return
 	}
 
-	if srv.KeepSandboxes == 0 {
-		return
-	}
-
-	if !srv.Sandbox {
-		return
-	}
-
-	sandboxesDir := agt.SandBoxesServiceDir(srv.Name)
+	sandboxesDir := agt.Config.SandboxesDirectory
 	files, err := ioutil.ReadDir(sandboxesDir)
 	if err != nil {
 		logger.Error(err)
 	}
 
 	count := len(files)
-	keeps := srv.KeepSandboxes
+	keeps := agt.Config.KeepSandboxes
 	removes := 0
 	if keeps > 0 {
 		removes = count - keeps
@@ -131,13 +135,20 @@ func (sess *Session) RemoveSandboxes() {
 		}
 	}
 
-	logger.Debugf("%s sandbox(es): %d", srv.Name, count)
-	logger.Debugf("%s keeps: %d", srv.Name, keeps)
-	logger.Debugf("%s removes: %d", srv.Name, removes)
+	logger.Debugf("sandbox(es): %d", count)
+	logger.Debugf("keeps: %d", keeps)
+	logger.Debugf("removes: %d", removes)
 
 	for i := 0; i < removes; i++ {
 		file := files[i]
-		sandboxPath := filepath.Join(sandboxesDir, file.Name())
+		sandboxName := file.Name()
+
+		if m.IsActiveSandbox(sandboxName) {
+			logger.Debugf("skipped to delete %s. because this is active sandbox", sandboxName)
+			continue
+		}
+
+		sandboxPath := filepath.Join(sandboxesDir, sandboxName)
 		if err := os.RemoveAll(sandboxPath); err != nil {
 			logger.Error(err)
 		}

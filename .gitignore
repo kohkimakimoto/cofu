@@ -4,10 +4,12 @@ Thumbs.db
 ._*
 *.iml
 .vscode/
-.buildsh/
 /vendor
 .vagrant
 /_work
+
+node_modules/
+npm-debug.log
 
 build/outputs/*
 .go-packages/

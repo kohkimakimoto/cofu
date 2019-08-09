@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kohkimakimoto/cofu/agent"
 	"github.com/kohkimakimoto/cofu/cofu"
+	"github.com/kohkimakimoto/cofu/ext/agent"
 	"github.com/kohkimakimoto/cofu/fetcher"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
@@ -44,7 +44,9 @@ func realMain() (status int) {
 	flag.BoolVar(&optColor, "color", false, "")
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
-	// agent options
+	// server|agent options
+	//flag.BoolVar(&optServer, "s", false, "")
+	//flag.BoolVar(&optServer, "server", false, "")
 	flag.BoolVar(&optAgent, "a", false, "")
 	flag.BoolVar(&optAgent, "agent", false, "")
 	flag.StringVar(&optConfigFile, "c", "", "")
@@ -88,6 +90,16 @@ Options:
 		}
 		return 0
 	}
+
+	//if optServer {
+	//	// run server
+	//	if err := server.Start(optConfigFile); err != nil {
+	//		printError(err)
+	//		return 1
+	//	}
+	//
+	//	return 0
+	//}
 
 	if optAgent {
 		// run agent
@@ -145,7 +157,6 @@ Options:
 	app.Logger = logger
 
 	app.ResourceTypes = resource.ResourceTypes
-	app.BuiltinRecipes = resource.DefaultBuiltinRecipes
 
 	if optVarJsonFile != "" {
 		if err := app.LoadVariableFromJSONFile(optVarJsonFile); err != nil {

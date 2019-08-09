@@ -30,16 +30,24 @@
   version = "0.3.1"
 
 [[constraint]]
+  name = "github.com/boltdb/bolt"
+  version = "1.3.1"
+
+[[constraint]]
   branch = "master"
   name = "github.com/cjoudrey/gluahttp"
 
 [[constraint]]
+  name = "github.com/client9/reopen"
+  version = "1.0.0"
+
+[[constraint]]
   name = "github.com/fatih/color"
-  version = "1.5.0"
+  version = "1.7.0"
 
 [[constraint]]
   name = "github.com/gliderlabs/ssh"
-  version = "0.1.4"
+  version = "0.2.2"
 
 [[constraint]]
   name = "github.com/hashicorp/go-getter"
@@ -79,11 +87,15 @@
 
 [[constraint]]
   name = "github.com/kr/pty"
-  version = "1.1.4"
+  version = "1.1.8"
+
+[[constraint]]
+  name = "github.com/labstack/echo"
+  version = "3.3.10"
 
 [[constraint]]
   name = "github.com/labstack/gommon"
-  version = "0.2.8"
+  version = "0.2.9"
 
 [[constraint]]
   name = "github.com/mitchellh/mapstructure"

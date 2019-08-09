@@ -9,6 +9,7 @@ import (
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/loglv"
 	"github.com/labstack/gommon/log"
+	"github.com/yookoala/realpath"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"os"
@@ -20,27 +21,28 @@ import (
 )
 
 type App struct {
-	LState                *lua.LState
-	Logger                Logger
-	ResourceTypes         []*ResourceType
-	ResourceTypesMap      map[string]*ResourceType
-	Resources             []*Resource
-	DelayedNotifications  []*Notification
-	Infra                 *infra.Infra
-	DryRun                bool
-	Tmpdir                string
-	Tmpfiles              []string
-	variable              map[string]interface{}
-	Parent                *App
-	Level                 int
-	LogHeaderWitoutIndent string
-	BuiltinRecipes        map[string]string
+	LState               *lua.LState
+	Logger               Logger
+	ResourceTypes        []*ResourceType
+	ResourceTypesMap     map[string]*ResourceType
+	Resources            []*Resource
+	DelayedNotifications []*Notification
+	Infra                *infra.Infra
+	DryRun               bool
+	Tmpdir               string
+	Tmpfiles             []string
+	variable             map[string]interface{}
+	Parent               *App
+	Level                int
+	LogHeader            string
+	BuiltinRecipes       map[string]string
+	Basepath             string
 }
 
 const LUA_APP_KEY = "*__COFU_APP__"
 
 func NewApp() *App {
-	defaultLogHeader := `${prefix} ${level}`
+	defaultLogHeader := `${level} ${prefix}`
 	defaultLogger := log.New("cofu")
 	defaultLogger.SetPrefix("")
 	defaultLogger.SetHeader(defaultLogHeader)
@@ -58,10 +60,10 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
-		Parent:                nil,
-		Level:                 0,
-		LogHeaderWitoutIndent: defaultLogHeader,
-		BuiltinRecipes:        map[string]string{},
+		Parent:         nil,
+		Level:          0,
+		LogHeader:      defaultLogHeader,
+		Basepath:       "",
 	}
 }
 
@@ -122,7 +124,7 @@ func (app *App) Close() {
 	}
 
 	if app.Parent != nil {
-		app.Logger.SetHeader(app.Parent.LogHeaderWitoutIndent + GenLogIndent(app.Parent.Level))
+		app.Logger.SetPrefix(GenLogIndent(app.Parent.Level))
 	}
 }
 
@@ -179,11 +181,7 @@ func (app *App) LoadRecipe(recipeContent string) error {
 }
 
 func (app *App) LoadRecipeFile(recipeFile string) error {
-	if err := app.LState.DoFile(recipeFile); err != nil {
-		return err
-	}
-
-	return nil
+	return loadRecipeFile(recipeFile, app.LState, app)
 }
 
 func (app *App) RemoveDuplicateDelayedNotification() {
@@ -288,7 +286,7 @@ func (app *App) Run(dryRun bool) (err error) {
 		logger.Debugf("os_release '%s'", app.Infra.Command().OSRelease())
 	}
 
-	logger.Infof("Loaded %d resource(s).", len(app.Resources))
+	logger.Debugf("Loaded %d resource(s).", len(app.Resources))
 
 	for _, r := range app.Resources {
 		err := r.Run("")
@@ -383,6 +381,10 @@ func (app *App) IsRootApp() bool {
 	return app.Level == 0
 }
 
+func (app *App) LoadUserResources() error {
+	return nil
+}
+
 func GetApp(L *lua.LState) (*App, error) {
 	ud, ok := L.GetGlobal(LUA_APP_KEY).(*lua.LUserData)
 	if !ok {
@@ -436,4 +438,36 @@ func GenLogIndent(level int) string {
 
 func SetNoColor(b bool) {
 	fatihColor.NoColor = false
+}
+
+func getBasepath(L *lua.LState) string {
+	basepath, err := basepath(L)
+	if err != nil {
+		wd, err2 := os.Getwd()
+		if err2 == nil {
+			basepath = wd
+		}
+	}
+
+	return basepath
+}
+
+func loadRecipeFile(recipeFile string, L *lua.LState, app *App) error {
+	orgBase := app.Basepath
+	defer func() {
+		app.Basepath = orgBase
+	}()
+
+	dir := filepath.Dir(recipeFile)
+	base, err := realpath.Realpath(dir)
+	if err != nil {
+		return err
+	}
+	app.Basepath = base
+
+	if err := L.DoFile(recipeFile); err != nil {
+		return err
+	}
+
+	return nil
 }

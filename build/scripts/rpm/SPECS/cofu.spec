@@ -9,6 +9,7 @@ Source0:        %{name}_linux_amd64.zip
 Source1:        cofu-agent.toml
 Source2:        cofu-agent.sysconfig
 Source3:        cofu-agent.service
+Source4:        environment
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %description
@@ -23,7 +24,7 @@ cp %{name} %{buildroot}/%{_bindir}
 
 mkdir -p %{buildroot}/%{_sysconfdir}/cofu-agent
 cp %{SOURCE1} %{buildroot}/%{_sysconfdir}/cofu-agent/cofu-agent.toml
-mkdir -p %{buildroot}/%{_sysconfdir}/cofu-agent/conf.d
+cp %{SOURCE4} %{buildroot}/%{_sysconfdir}/cofu-agent/environment
 
 mkdir -p %{buildroot}/%{_sysconfdir}/sysconfig
 cp %{SOURCE2} %{buildroot}/%{_sysconfdir}/sysconfig/cofu-agent
@@ -55,8 +56,8 @@ rm -rf %{buildroot}
 %attr(755, root, root) %{_bindir}/%{name}
 %dir %attr(755, root, root) /var/lib/cofu-agent
 %config(noreplace) %{_sysconfdir}/cofu-agent/cofu-agent.toml
+%config(noreplace) %{_sysconfdir}/cofu-agent/environment
 %config(noreplace) %{_sysconfdir}/sysconfig/cofu-agent
-%dir %attr(755, root, root) %{_sysconfdir}/cofu-agent/conf.d
 
 %if 0%{?fedora} >= 14 || 0%{?rhel} >= 7
 %{_unitdir}/cofu-agent.service

@@ -33,7 +33,6 @@ software_package "nginx" {
 * [software_package](resources_software_package.md)
 * [template](resources_template.md)
 * [user](resources_user.md)
-* [resource](resources_resource.md)
 
 ## Common Attributes
 

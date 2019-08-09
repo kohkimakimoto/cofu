@@ -4,13 +4,11 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Definition is deprecated from v0.8.0
-
 type Definition struct {
-	Name   string
-	Params *lua.LTable
-	Func   *lua.LFunction
-	app    *App
+	Name          string
+	DefaultParams *lua.LTable
+	Func          *lua.LFunction
+	app           *App
 }
 
 func (definition *Definition) LGFunction() func(L *lua.LState) int {
@@ -40,12 +38,16 @@ func (definition *Definition) LGFunction() func(L *lua.LState) int {
 func (definition *Definition) run(L *lua.LState, name string, attrs *lua.LTable) {
 	mergedAttrs := L.NewTable()
 
-	definition.Params.ForEach(func(k, v lua.LValue) {
-		overwriteValue := attrs.RawGet(k)
+	// copy attrs
+	attrs.ForEach(func(k, v lua.LValue) {
+		mergedAttrs.RawSet(k, v)
+	})
+
+	definition.DefaultParams.ForEach(func(k, v lua.LValue) {
+		overwriteValue := mergedAttrs.RawGet(k)
 		if overwriteValue == lua.LNil {
+			// set default
 			mergedAttrs.RawSet(k, v)
-		} else {
-			mergedAttrs.RawSet(k, overwriteValue)
 		}
 	})
 
