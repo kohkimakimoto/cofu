@@ -44,9 +44,6 @@ func realMain() (status int) {
 	flag.BoolVar(&optColor, "color", false, "")
 	flag.BoolVar(&optNoColor, "no-color", false, "")
 
-	// server|agent options
-	//flag.BoolVar(&optServer, "s", false, "")
-	//flag.BoolVar(&optServer, "server", false, "")
 	flag.BoolVar(&optAgent, "a", false, "")
 	flag.BoolVar(&optAgent, "agent", false, "")
 	flag.StringVar(&optConfigFile, "c", "", "")
@@ -90,16 +87,6 @@ Options:
 		}
 		return 0
 	}
-
-	//if optServer {
-	//	// run server
-	//	if err := server.Start(optConfigFile); err != nil {
-	//		printError(err)
-	//		return 1
-	//	}
-	//
-	//	return 0
-	//}
 
 	if optAgent {
 		// run agent
