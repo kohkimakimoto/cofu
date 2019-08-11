@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/kohkimakimoto/cofu/cofu"
 	"github.com/kohkimakimoto/cofu/ext/agent"
-	"github.com/kohkimakimoto/cofu/fetcher"
+	"github.com/kohkimakimoto/cofu/ext/fetcher"
 	"github.com/kohkimakimoto/cofu/resource"
 	"github.com/kohkimakimoto/cofu/support/color"
 	"github.com/kohkimakimoto/cofu/support/logutil"
