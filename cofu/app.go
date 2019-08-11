@@ -60,10 +60,10 @@ func NewApp() *App {
 			"GOARCH": runtime.GOARCH,
 			"GOOS":   runtime.GOOS,
 		},
-		Parent:         nil,
-		Level:          0,
-		LogHeader:      defaultLogHeader,
-		Basepath:       "",
+		Parent:    nil,
+		Level:     0,
+		LogHeader: defaultLogHeader,
+		Basepath:  "",
 	}
 }
 

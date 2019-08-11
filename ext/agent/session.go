@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -71,6 +72,7 @@ type Session struct {
 	Agt                  *Agent
 	Uid                  int
 	Gid                  int
+	UserStruct           *user.User
 	ForwardAgentListener net.Listener
 }
 

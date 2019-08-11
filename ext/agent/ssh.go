@@ -175,7 +175,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 
 	// setup user and group
-	uid, gid, err := getUidAndGidFromUsername(sess.User())
+	uid, gid, u, err := getUidAndGidFromUsername(sess.User())
 	if err != nil {
 		return err
 	}
@@ -187,6 +187,15 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	sess.Uid = uid
 	sess.Gid = gid
+	sess.UserStruct = u
+
+	// set environment about user
+	// This logic was borrowed from `do_setup_env` of session.c in the openssh.
+	currentEnviron = append(currentEnviron,
+		fmt.Sprintf("USER=%s", u.Name),
+		fmt.Sprintf("LOGNAME=%s", u.Name),
+		fmt.Sprintf("HOME=%s", u.HomeDir),
+	)
 
 	// support forward agent
 	currentEnviron, err = takeForwardAgentIfRequested(sess, currentEnviron)
@@ -299,23 +308,23 @@ func setWinsize(f *os.File, w, h int) {
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
 
-func getUidAndGidFromUsername(userName string) (int, int, error) {
+func getUidAndGidFromUsername(userName string) (int, int, *user.User, error) {
 	u, err := LookupUserStruct(userName)
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, nil, err
 	}
 
 	uid, err := strconv.Atoi(u.Uid)
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, nil, err
 	}
 
 	gid, err := strconv.Atoi(u.Gid)
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, nil, err
 	}
 
-	return uid, gid, nil
+	return uid, gid, u, nil
 }
 
 func takeForwardAgentIfRequested(sess *Session, env []string) ([]string, error) {
