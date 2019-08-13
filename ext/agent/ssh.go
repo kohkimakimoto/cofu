@@ -237,7 +237,7 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger.Debugf("command: %v", commandAndArgs)
 	// exec command
 	cmd := exec.Command(command, args...)
-	cmd.Env = append(currentEnviron, os.Environ()...)
+	cmd.Env = append(os.Environ(), currentEnviron...)
 	if os.Getuid() == 0 {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
