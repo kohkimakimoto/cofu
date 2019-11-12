@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gliderlabs/ssh"
+	"github.com/jehiah/go-strftime"
 	"io"
 	"io/ioutil"
 	"net"
@@ -12,18 +13,19 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 type SessionManager struct {
 	Agt      *Agent
-	Sessions map[uint64]*Session
+	Sessions map[string]*Session
 	mutex    *sync.Mutex
 }
 
 func NewSessionManager(a *Agent) *SessionManager {
 	return &SessionManager{
 		Agt:      a,
-		Sessions: map[uint64]*Session{},
+		Sessions: map[string]*Session{},
 		mutex:    new(sync.Mutex),
 	}
 }
@@ -37,7 +39,7 @@ func (m *SessionManager) SetSession(sess *Session) int {
 	return len(m.Sessions)
 }
 
-func (m *SessionManager) HasSession(sessionID uint64) bool {
+func (m *SessionManager) HasSession(sessionID string) bool {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -67,7 +69,7 @@ func (m *SessionManager) RemoveSession(sess *Session) {
 
 type Session struct {
 	ssh.Session
-	ID                   uint64
+	ID                   string
 	SandboxName          string
 	Agt                  *Agent
 	Uid                  int
@@ -76,32 +78,27 @@ type Session struct {
 	ForwardAgentListener net.Listener
 }
 
-func NewSession(a *Agent, sshSession ssh.Session) (*Session, error) {
-	id, err := a.Gen.NextID()
-	if err != nil {
-		return nil, err
-	}
+func NewSession(a *Agent, sshSession ssh.Session) *Session {
+	id := generateSessionID()
 
-	sandboxName := fmt.Sprintf("%d", id)
+	sandboxName := id
 	for _, envLine := range sshSession.Environ() {
 		envItem := strings.SplitN(envLine, "=", 2)
 		if len(envItem) == 2 {
 			key := envItem[0]
 			value := envItem[1]
 			if key == "COFU_AGENT_SANDBOX_NAME" {
-				sandboxName = value
+				id = value
 			}
 		}
 	}
 
-	sess := &Session{
+	return &Session{
 		Session:     sshSession,
 		ID:          id,
 		SandboxName: sandboxName,
 		Agt:         a,
 	}
-
-	return sess, nil
 }
 
 func (sess *Session) Terminate() {
@@ -207,4 +204,31 @@ func (sess *Session) String(in string) error {
 
 func (sess *Session) Stringf(format string, a ...interface{}) error {
 	return sess.String(fmt.Sprintf(format, a...))
+}
+
+var (
+	idLastTimestamp string
+	idLock          sync.Mutex
+)
+
+func generateSessionID() string {
+	idLock.Lock()
+	defer idLock.Unlock()
+
+	timestamp := nextTimestamp()
+
+	for idLastTimestamp == timestamp {
+		time.Sleep(1 * time.Millisecond)
+		timestamp = nextTimestamp()
+	}
+
+	idLastTimestamp = timestamp
+	return timestamp
+}
+
+func nextTimestamp() string {
+	t := time.Now()
+	timestamp := strftime.Format("%Y%m%d%H%M%S", t)
+	milli := fmt.Sprintf("%03d", (t.UnixNano()/1e6)%1000)
+	return timestamp + milli
 }
