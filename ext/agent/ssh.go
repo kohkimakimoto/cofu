@@ -140,24 +140,20 @@ func startSSHServer(a *Agent) error {
 func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger := a.Logger
 
-	sess, err := NewSession(a, sshSession)
-	if err != nil {
-		return err
-	}
+	sess := NewSession(a, sshSession)
+	numSess := a.SessionManager.SetSession(sess)
+	defer sess.Terminate()
+
+	logger.Infof("Allocated session %s", sess.ID)
 
 	ptyReq, winCh, isPty := sess.Pty()
 
 	logger.Debugf("cofu-agent got a ssh command: %v", sess.Command())
-
-	numSess := a.SessionManager.SetSession(sess)
-	defer sess.Terminate()
-
-	logger.Infof("Allocated session %d", sess.ID)
 	logger.Debugf("The session user is %s", sess.User())
 
 	currentEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
-		fmt.Sprintf("COFU_AGENT_SESSION_ID=%d", sess.ID),
+		fmt.Sprintf("COFU_AGENT_SESSION_ID=%s", sess.ID),
 		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
 		fmt.Sprintf("COFU_AGENT_SANDBOX_NAME=%s", sess.SandboxName),
 		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),

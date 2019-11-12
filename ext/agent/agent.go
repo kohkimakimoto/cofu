@@ -2,7 +2,6 @@ package agent
 
 import (
 	"fmt"
-	"github.com/kayac/go-katsubushi"
 	"github.com/kohkimakimoto/cofu/support/logutil"
 	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
@@ -36,7 +35,6 @@ func Start(configFile string) error {
 type Agent struct {
 	Config         *Config
 	Logger         *log.Logger
-	Gen            katsubushi.Generator
 	SessionManager *SessionManager
 }
 
@@ -84,18 +82,6 @@ func (a *Agent) Start() error {
 		}
 	}
 	logger.Infof("Sandbox directory: %s", config.SandboxesDirectory)
-
-	// Uniqid generator
-	epoch, err := config.IDEpochTime()
-	if err != nil {
-		return err
-	}
-	katsubushi.Epoch = epoch
-	gen, err := katsubushi.NewGenerator(0)
-	if err != nil {
-		return err
-	}
-	a.Gen = gen
 
 	// session manager
 	a.SessionManager = NewSessionManager(a)
