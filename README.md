@@ -58,6 +58,7 @@ If you're just getting started with Cofu, please start to read [Getting Started]
     * [include_recipe](docs/built-in-functions_include_recipe.md)
     * [run_command](docs/built-in-functions_run_command.md)
 * [Built-in Libraries](docs/built-in-libraries.md)
+* [Cofu Agent](docs/cofu-agent.md)
 
 ## See Also
 
