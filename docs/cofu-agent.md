@@ -9,10 +9,11 @@ It is especially useful for executing commands with a specific environment on a 
 - [Sandboxes](#sandboxes)
 - [Functions](#functions)
 - [Configuration](#configuration)
-  - [global section](#global-section)
-    - [global section parameters](#global-section-parameters)
+  - [Global section](#global-section)
+    - [Global section parameters](#global-section-parameters)
   - [`functions.x` section](#functionsx-section)
     - [`functions.x` section parameters](#functionsx-section-parameters)
+    - [`functions.x` section example](#functionsx-section-example)
   - [`include` section](#include-section)
     - [`include` section parameters](#include-section-parameters)
     - [`include` section example](#include-section-example)
@@ -101,11 +102,11 @@ environment_file = "/etc/cofu-agent/environment"
 # environment = []
 ```
 
-### global section
+### Global section
 
 This section defines global settings for Cofu Agent server process.
 
-#### global section parameters
+#### Global section parameters
 
 * `log_level` (string): The log level (`debug|info|warn|error`). The default is `info`. All logs in Cofu Agent outputs STDOUT.
 
@@ -138,6 +139,35 @@ The `functions.x` section defines a function. `x` is the name of the function.
 #### `functions.x` section parameters
 
 WIP...
+
+#### `functions.x` section example
+
+```toml
+[functions.php]
+entrypoint = [ "/bin/bash", "-c", """
+DOCKER_RUN_OPTIONS=""
+if [[ -n "${COFU_AGENT_PTY}" ]]; then
+  DOCKER_RUN_OPTIONS="-t"
+fi
+docker run --rm -i -v $PWD:/shared -w /shared ${DOCKER_RUN_OPTIONS} php:7.3 ${COFU_AGENT_FUNCTION_SESSION_COMMAND}
+"""]
+command = [ "/bin/bash" ]
+```
+
+Usage:
+
+```
+$ ssh -T -p 2222 php@localhost php -v
+PHP 7.3.4 (cli) (built: Apr  6 2019 02:24:14) ( NTS )
+Copyright (c) 1997-2018 The PHP Group
+Zend Engine v3.3.4, Copyright (c) 1998-2018 Zend Technologies
+```
+
+You can also use an interactive bash shell in the docker container.
+
+```
+$ ssh -p 2222 php@localhost
+```
 
 ### `include` section
 
