@@ -17,26 +17,43 @@ import (
 )
 
 type SessionManager struct {
-	Agt      *Agent
-	Sessions map[string]*Session
-	mutex    *sync.Mutex
+	Agt        *Agent
+	Sessions   map[string]*Session
+	FnSessions map[string]map[string]*Session
+	mutex      *sync.Mutex
 }
 
 func NewSessionManager(a *Agent) *SessionManager {
 	return &SessionManager{
-		Agt:      a,
-		Sessions: map[string]*Session{},
-		mutex:    new(sync.Mutex),
+		Agt:        a,
+		Sessions:   map[string]*Session{},
+		FnSessions: map[string]map[string]*Session{},
+		mutex:      new(sync.Mutex),
 	}
 }
 
-func (m *SessionManager) SetSession(sess *Session) int {
+func (m *SessionManager) SetSession(sess *Session) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	if sess.Fn != nil {
+		sessMapPerFn, ok := m.FnSessions[sess.Fn.Name]
+		if !ok {
+			sessMapPerFn = map[string]*Session{}
+		}
+
+		max := sess.Fn.MaxProcesses
+		if max > 0 && len(sessMapPerFn) >= max {
+			return fmt.Errorf("Function %s is limited number of processes executed at the same time. The max is %d", sess.Fn.Name, max)
+		}
+
+		sessMapPerFn[sess.ID] = sess
+		m.FnSessions[sess.Fn.Name] = sessMapPerFn
+	}
+
 	m.Sessions[sess.ID] = sess
 
-	return len(m.Sessions)
+	return nil
 }
 
 func (m *SessionManager) HasSession(sessionID string) bool {
@@ -47,12 +64,12 @@ func (m *SessionManager) HasSession(sessionID string) bool {
 	return ok
 }
 
-func (m *SessionManager) IsActiveSandbox(sandboxName string) bool {
+func (m *SessionManager) IsActiveSandbox(sandbox string) bool {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	for _, session := range m.Sessions {
-		if session.SandboxName == sandboxName {
+		if session.Sandbox == sandbox {
 			return true
 		}
 	}
@@ -64,18 +81,27 @@ func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	if sess.Fn != nil {
+		sessMapPerFn, ok := m.FnSessions[sess.Fn.Name]
+		if ok {
+			delete(sessMapPerFn, sess.ID)
+			m.FnSessions[sess.Fn.Name] = sessMapPerFn
+		}
+	}
+
 	delete(m.Sessions, sess.ID)
 }
 
 type Session struct {
 	ssh.Session
 	ID                   string
-	SandboxName          string
+	Sandbox              string
 	Agt                  *Agent
 	Uid                  int
 	Gid                  int
 	UserStruct           *user.User
 	ForwardAgentListener net.Listener
+	Fn                   *FunctionConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) *Session {
@@ -87,17 +113,20 @@ func NewSession(a *Agent, sshSession ssh.Session) *Session {
 		if len(envItem) == 2 {
 			key := envItem[0]
 			value := envItem[1]
-			if key == "COFU_AGENT_SANDBOX_NAME" {
-				id = value
+			if key == "COFU_AGENT_SANDBOX" {
+				sandboxName = value
 			}
 		}
 	}
 
+	fn := a.LookupFunction(sshSession.User())
+
 	return &Session{
-		Session:     sshSession,
-		ID:          id,
-		SandboxName: sandboxName,
-		Agt:         a,
+		Session: sshSession,
+		ID:      id,
+		Sandbox: sandboxName,
+		Agt:     a,
+		Fn:      fn,
 	}
 }
 
@@ -115,6 +144,7 @@ func (m *SessionManager) RemoveOldSandboxes() {
 	logger := agt.Logger
 
 	if agt.Config.KeepSandboxes == 0 {
+		// does not clean up sandboxes automatically.
 		return
 	}
 
@@ -140,14 +170,14 @@ func (m *SessionManager) RemoveOldSandboxes() {
 
 	for i := 0; i < removes; i++ {
 		file := files[i]
-		sandboxName := file.Name()
+		sandbox := file.Name()
 
-		if m.IsActiveSandbox(sandboxName) {
-			logger.Debugf("skipped to delete %s. because this is active sandbox", sandboxName)
+		if m.IsActiveSandbox(sandbox) {
+			logger.Debugf("skipped to delete %s. because this is active sandbox", sandbox)
 			continue
 		}
 
-		sandboxPath := filepath.Join(sandboxesDir, sandboxName)
+		sandboxPath := filepath.Join(sandboxesDir, sandbox)
 		if err := os.RemoveAll(sandboxPath); err != nil {
 			logger.Error(err)
 		}

@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -141,10 +142,12 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger := a.Logger
 
 	sess := NewSession(a, sshSession)
-	numSess := a.SessionManager.SetSession(sess)
+	if err := a.SessionManager.SetSession(sess); err != nil {
+		return err
+	}
 	defer sess.Terminate()
 
-	logger.Infof("Allocated session %s", sess.ID)
+	logger.Infof("Allocated session: %s sandbox: %s", sess.ID, sess.Sandbox)
 
 	ptyReq, winCh, isPty := sess.Pty()
 
@@ -153,17 +156,32 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	currentEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
+		fmt.Sprintf("COFU_AGENT_SESSION=%s", sess.ID),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%s", sess.ID),
-		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
-		fmt.Sprintf("COFU_AGENT_SANDBOX_NAME=%s", sess.SandboxName),
+		fmt.Sprintf("COFU_AGENT_SANDBOX=%s", sess.Sandbox),
 		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
 	)
 
-	commandAndArgs := []string{}
+	if sess.Fn != nil {
+		logger.Infof("fetched function: %s", sess.Fn.Name)
+		currentEnviron = append(currentEnviron, fmt.Sprintf("COFU_AGENT_FUNCTION=%s", sess.Fn.Name))
+	}
+
+	sessCommand := []string{}
 	if len(sess.Command()) > 0 {
-		commandAndArgs = sess.Command()
+		sessCommand = sess.Command()
 	} else {
-		commandAndArgs = []string{"/bin/bash"}
+		if sess.Fn != nil {
+			if sess.Fn.Command != nil && len(sess.Fn.Command) > 0 {
+				sessCommand = sess.Fn.Command
+			}
+		} else {
+			sessCommand = []string{"/bin/bash"}
+		}
+	}
+
+	if sess.Fn != nil {
+		currentEnviron = append(currentEnviron, fmt.Sprintf("COFU_AGENT_FUNCTION_SESSION_COMMAND=%s", strings.Join(sessCommand, " ")))
 	}
 
 	if isPty {
@@ -171,14 +189,14 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	}
 
 	// setup user and group
-	uid, gid, u, err := getUidAndGidFromUsername(sess.User())
+	uid, gid, u, err := getUidAndGid(sess)
 	if err != nil {
 		return err
 	}
 	logger.Debugf("This session runs by user: %d, group: %d", uid, gid)
 
 	if os.Getuid() != 0 && os.Getuid() != uid {
-		return errors.New("The cofu is running non root user. The connection can be accepted only by same user who runs cofu.")
+		return errors.New("The Cofu Agent is running non root user. The connection can be accepted only by same user who runs Cofu Agent.")
 	}
 
 	sess.Uid = uid
@@ -224,6 +242,17 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		currentEnviron = append(currentEnviron, expandEnvironToString(v, currentEnviron))
 	}
 
+	commandAndArgs := []string{}
+	if sess.Fn != nil && sess.Fn.Entrypoint != nil && len(sess.Fn.Entrypoint) > 0 {
+		commandAndArgs = sess.Fn.Entrypoint
+	} else {
+		commandAndArgs = []string{}
+	}
+	commandAndArgs = append(commandAndArgs, sessCommand...)
+	if len(commandAndArgs) == 0 {
+		return errors.New("You've successfully authenticated, but it has no command to run.")
+	}
+
 	command := commandAndArgs[0]
 	args := []string{}
 	if len(commandAndArgs) >= 2 {
@@ -258,6 +287,8 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		}()
 
 		io.Copy(sess, f) // stdout
+
+		return cmd.Wait()
 	} else {
 		cmd.Stdout = sess
 		cmd.Stderr = sess.Stderr()
@@ -275,9 +306,30 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-	}
 
-	return cmd.Wait()
+		if sess.Fn != nil && sess.Fn.Timeout > 0 {
+			done := make(chan error)
+			go func() {
+				done <- cmd.Wait()
+			}()
+
+			select {
+			case <-time.After(time.Duration(sess.Fn.Timeout) * time.Second):
+				if err := cmd.Process.Kill(); err != nil {
+					return errors.Wrapf(err, "failed to kill: "+err.Error())
+				}
+				return fmt.Errorf("Cofu Agent function timeout. it took time over %d sec.", sess.Fn.Timeout)
+			case err := <-done:
+				defer close(done)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+		} else {
+			return cmd.Wait()
+		}
+	}
 }
 
 func exitStatus(err error) int {
@@ -302,6 +354,45 @@ func exitStatus(err error) int {
 func setWinsize(f *os.File, w, h int) {
 	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
+}
+
+func getUidAndGid(sess *Session) (int, int, *user.User, error) {
+	if sess.Fn != nil {
+		return getUidAndGidFromFunctionConfig(sess.Fn)
+	} else {
+		return getUidAndGidFromUsername(sess.User())
+	}
+}
+
+func getUidAndGidFromFunctionConfig(fn *FunctionConfig) (int, int, *user.User, error) {
+	var uid, gid int
+	var u *user.User
+	var err error
+	if fn.User != "" {
+		uid, gid, u, err = getUidAndGidFromUsername(fn.User)
+		if err != nil {
+			return -1, -1, nil, err
+		}
+	} else {
+		uid = os.Getuid()
+		gid = os.Getgid()
+
+		u, err = LookupUserStruct(strconv.Itoa(uid))
+		if err != nil {
+			return -1, -1, nil, err
+		}
+	}
+
+	groupName := fn.Group
+	if groupName != "" {
+		id, err := LookupGroup(groupName)
+		if err != nil {
+			return -1, -1, nil, err
+		}
+		gid = id
+	}
+
+	return uid, gid, u, nil
 }
 
 func getUidAndGidFromUsername(userName string) (int, int, *user.User, error) {
@@ -471,11 +562,18 @@ func expandEnvironToString(value string, environ []string) string {
 func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 	config := a.Config
 	logger := a.Logger
+	fnConfig := a.LookupFunction(ctx.User())
 
 	var keysdata []byte
 
-	if config.AuthorizedKeysFile != "" {
-		if _, err := os.Stat(config.AuthorizedKeysFile); err == nil {
+	authorizedKeysFile := config.AuthorizedKeysFile
+	if fnConfig != nil && fnConfig.AuthorizedKeysFile != nil {
+		// override authorizedKeysFile by fnConfig
+		authorizedKeysFile = *fnConfig.AuthorizedKeysFile
+	}
+
+	if authorizedKeysFile != "" {
+		if _, err := os.Stat(authorizedKeysFile); err == nil {
 			data, err := ioutil.ReadFile(config.AuthorizedKeysFile)
 			if err != nil {
 				logger.Error(err)
@@ -489,7 +587,13 @@ func checkAuthKey(a *Agent, ctx ssh.Context, key ssh.PublicKey) bool {
 		}
 	}
 
-	for _, s := range config.AuthorizedKeys {
+	authorizedKeys := config.AuthorizedKeys
+	if fnConfig != nil && fnConfig.AuthorizedKeys != nil {
+		// override service config
+		authorizedKeys = fnConfig.AuthorizedKeys
+	}
+
+	for _, s := range authorizedKeys {
 		keysdata = append(keysdata, []byte(s+"\n")...)
 	}
 
