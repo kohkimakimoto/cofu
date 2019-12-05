@@ -33,8 +33,14 @@ If you get like the following messages, you are successful in starting Cofu Agen
 Try to connect with it by using SSH protocol.
 
 ```
-$ ssh -T -p 2222 kohkimakimoto@localhost
+$ ssh -p 2222 kohkimakimoto@localhost
 ```
+
+## Sandboxes
+
+Cofu Agent is implemented for executing server management task such as provisioning. Therefore, it provides some addtional functionalities that a general SSH server doesn't have. Sandboxes are one of them.
+
+A sandbox is a directory that is created when a SSH client connected to Cofu Agent. The sandbox is a unique directory of each SSH session. It is set as the current working directory of a SHELL.
 
 ## Configuration
 
@@ -76,3 +82,4 @@ environment_file = "/etc/cofu-agent/environment"
 # environment
 # environment = []
 ```
+
