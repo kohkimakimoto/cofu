@@ -148,7 +148,8 @@ sandboxes_directory = "/var/lib/cofu-agent/sandboxes"
 keep_sandboxes = 10
 disable_local_auth = false
 environment = [
-  KEY=VALUE
+  "KEY1=VALUE1",
+  "KEY2=VALUE2",
 ]
 environment_file = "/etc/cofu-agent/environment"
 hot_reload = false
