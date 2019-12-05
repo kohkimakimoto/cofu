@@ -17,26 +17,43 @@ import (
 )
 
 type SessionManager struct {
-	Agt      *Agent
-	Sessions map[string]*Session
-	mutex    *sync.Mutex
+	Agt        *Agent
+	Sessions   map[string]*Session
+	FnSessions map[string]map[string]*Session
+	mutex      *sync.Mutex
 }
 
 func NewSessionManager(a *Agent) *SessionManager {
 	return &SessionManager{
-		Agt:      a,
-		Sessions: map[string]*Session{},
-		mutex:    new(sync.Mutex),
+		Agt:        a,
+		Sessions:   map[string]*Session{},
+		FnSessions: map[string]map[string]*Session{},
+		mutex:      new(sync.Mutex),
 	}
 }
 
-func (m *SessionManager) SetSession(sess *Session) int {
+func (m *SessionManager) SetSession(sess *Session) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	if sess.Fn != nil {
+		sessMapPerFn, ok := m.FnSessions[sess.Fn.Name]
+		if !ok {
+			sessMapPerFn = map[string]*Session{}
+		}
+
+		max := sess.Fn.MaxProcesses
+		if max > 0 && len(sessMapPerFn) >= max {
+			return fmt.Errorf("Function %s is limited number of processes executed at the same time. The max is %d", sess.Fn.Name, max)
+		}
+
+		sessMapPerFn[sess.ID] = sess
+		m.FnSessions[sess.Fn.Name] = sessMapPerFn
+	}
+
 	m.Sessions[sess.ID] = sess
 
-	return len(m.Sessions)
+	return nil
 }
 
 func (m *SessionManager) HasSession(sessionID string) bool {
@@ -64,6 +81,14 @@ func (m *SessionManager) RemoveSession(sess *Session) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	if sess.Fn != nil {
+		sessMapPerFn, ok := m.FnSessions[sess.Fn.Name]
+		if ok {
+			delete(sessMapPerFn, sess.ID)
+			m.FnSessions[sess.Fn.Name] = sessMapPerFn
+		}
+	}
+
 	delete(m.Sessions, sess.ID)
 }
 
@@ -76,6 +101,7 @@ type Session struct {
 	Gid                  int
 	UserStruct           *user.User
 	ForwardAgentListener net.Listener
+	Fn                   *FunctionConfig
 }
 
 func NewSession(a *Agent, sshSession ssh.Session) *Session {
@@ -93,11 +119,14 @@ func NewSession(a *Agent, sshSession ssh.Session) *Session {
 		}
 	}
 
+	fn := a.LookupFunction(sshSession.User())
+
 	return &Session{
 		Session: sshSession,
 		ID:      id,
 		Sandbox: sandboxName,
 		Agt:     a,
+		Fn:      fn,
 	}
 }
 

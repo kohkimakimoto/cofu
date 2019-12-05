@@ -102,6 +102,14 @@ func (a *Agent) Start() error {
 	return nil
 }
 
+func (a *Agent) LookupFunction(name string) *FunctionConfig {
+	c := a.Config
+	if fn, ok := c.Functions[name]; ok {
+		return fn
+	}
+	return nil
+}
+
 func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	defaultUmask := syscall.Umask(0)
 	defer syscall.Umask(defaultUmask)
