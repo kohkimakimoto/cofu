@@ -33,7 +33,7 @@ If you get like the following messages, you are successful in starting Cofu Agen
 Try to connect with it by using SSH protocol.
 
 ```
-$ ssh -T -p 2222 example@localhost
+$ ssh -T -p 2222 kohkimakimoto@localhost
 ```
 
 ## Configuration
