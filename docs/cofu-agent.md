@@ -1,7 +1,21 @@
-# Cofu Agent
+# Cofu Agent <!-- omit in toc -->
 
 Cofu Agent is a flexible SSH server that is included in `cofu` binary.
 It is especially useful for executing commands with a specific environment on a remote server. It will help you to provision remote server via SSH connection.
+
+## Table of Contents <!-- omit in toc -->
+
+- [Usage](#usage)
+- [Sandboxes](#sandboxes)
+- [Functions](#functions)
+- [Configuration](#configuration)
+  - [global section](#global-section)
+    - [global section parameters](#global-section-parameters)
+  - [`functions.x` section](#functionsx-section)
+    - [`functions.x` section parameters](#functionsx-section-parameters)
+  - [`include` section](#include-section)
+    - [`include` section parameters](#include-section-parameters)
+    - [`include` section example](#include-section-example)
 
 ## Usage
 
@@ -38,9 +52,13 @@ $ ssh -p 2222 kohkimakimoto@localhost
 
 ## Sandboxes
 
-Cofu Agent is implemented for executing server management task such as provisioning. Therefore, it provides some addtional functionalities that a general SSH server doesn't have. Sandboxes are one of them.
+Cofu Agent is implemented for executing server management tasks such as provisioning. Therefore, it provides some addtional functionalities that a general SSH server doesn't have. Sandboxes are one of them.
 
 A sandbox is a directory that is created when a SSH client connected to Cofu Agent. The sandbox is a unique directory of each SSH session. It is set as the current working directory of a SHELL.
+
+## Functions
+
+WIP...
 
 ## Configuration
 
@@ -83,3 +101,57 @@ environment_file = "/etc/cofu-agent/environment"
 # environment = []
 ```
 
+### global section
+
+This section defines global settings for Cofu Agent server process.
+
+#### global section parameters
+
+* `log_level` (string): The log level (`debug|info|warn|error`). The default is `info`. All logs in Cofu Agent outputs STDOUT.
+
+* `addr` (string): The listen address to the Cofu Agent process. The default is `0.0.0.0:2222`.
+
+* `authorized_keys_file` (string): Specifies the path of the authorized keys file to set authorization config.
+
+* `authorized_keys` (string): Specifies the public keys directly in the config file to set authorization config.
+
+* `disable_local_auth` (bool): If you set it `true`, Cofu Agent does not validate key when a client connects from the localhost. The default is `false`.
+
+* `host_key_file` (string): Specifies the host key file path. If you set it and it does not exists, Cofu Agent generates new key file to the path and use it.
+
+* `host_key` (string): Specifies the host key directly in the config file.
+
+* `sandboxes_directory` (string): This is the parent directory of the sandbox directories.
+
+* `keep_sandboxes` (int): Number of sandboxes for keeping. Cofu Agent removes old sandboxes automatically. If the value is `0`, does not remove any sandboxes.
+
+* `environment` (array of string): Specifies the environment variables with such as `KEY=VALUE` format.
+
+* `environment_file` (array of string): Specifies the file path. This file contains environment variables with such as `KEY=VALUE` format.
+
+* `hot_reload` (bool): If you set it `true`, Cofu Agent reloads the config file every client requests.
+
+### `functions.x` section
+
+The `functions.x` section defines a function. `x` is the name of the function.
+
+#### `functions.x` section parameters
+
+WIP...
+
+### `include` section
+
+The `include` section loads extra configuration files.
+
+#### `include` section parameters
+
+* `files` (array of strings): The files to be loaed within the configuration.
+
+#### `include` section example
+
+```toml
+[include]
+files = [
+  "/etc/cofu-agent/conf.d/*.toml"
+]
+```
