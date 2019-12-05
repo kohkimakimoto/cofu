@@ -24,3 +24,4 @@ If you're just getting started with Cofu, please start to read [Getting Started]
     * [include_recipe](built-in-functions_include_recipe.md)
     * [run_command](built-in-functions_run_command.md)
 * [Built-in Libraries](built-in-libraries.md)
+* [Cofu Agent](cofu-agent.md)
