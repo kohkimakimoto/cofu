@@ -141,10 +141,10 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 	logger := a.Logger
 
 	sess := NewSession(a, sshSession)
-	numSess := a.SessionManager.SetSession(sess)
+	a.SessionManager.SetSession(sess)
 	defer sess.Terminate()
 
-	logger.Infof("Allocated session %s", sess.ID)
+	logger.Infof("Allocated session: %s sandbox: %s", sess.ID, sess.Sandbox)
 
 	ptyReq, winCh, isPty := sess.Pty()
 
@@ -153,9 +153,9 @@ func handleSSHSession(a *Agent, sshSession ssh.Session) error {
 
 	currentEnviron := append(sess.Environ(),
 		fmt.Sprintf("COFU_AGENT_VERSION=%s", cofu.Version),
+		fmt.Sprintf("COFU_AGENT_SESSION=%s", sess.ID),
 		fmt.Sprintf("COFU_AGENT_SESSION_ID=%s", sess.ID),
-		fmt.Sprintf("COFU_AGENT_SESSION_NUM=%d", numSess),
-		fmt.Sprintf("COFU_AGENT_SANDBOX_NAME=%s", sess.SandboxName),
+		fmt.Sprintf("COFU_AGENT_SANDBOX=%s", sess.Sandbox),
 		fmt.Sprintf("COFU_COMMAND=%s", cofu.BinPath),
 	)
 

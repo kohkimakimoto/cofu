@@ -47,12 +47,12 @@ func (m *SessionManager) HasSession(sessionID string) bool {
 	return ok
 }
 
-func (m *SessionManager) IsActiveSandbox(sandboxName string) bool {
+func (m *SessionManager) IsActiveSandbox(sandbox string) bool {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	for _, session := range m.Sessions {
-		if session.SandboxName == sandboxName {
+		if session.Sandbox == sandbox {
 			return true
 		}
 	}
@@ -70,7 +70,7 @@ func (m *SessionManager) RemoveSession(sess *Session) {
 type Session struct {
 	ssh.Session
 	ID                   string
-	SandboxName          string
+	Sandbox              string
 	Agt                  *Agent
 	Uid                  int
 	Gid                  int
@@ -87,17 +87,17 @@ func NewSession(a *Agent, sshSession ssh.Session) *Session {
 		if len(envItem) == 2 {
 			key := envItem[0]
 			value := envItem[1]
-			if key == "COFU_AGENT_SANDBOX_NAME" {
-				id = value
+			if key == "COFU_AGENT_SANDBOX" {
+				sandboxName = value
 			}
 		}
 	}
 
 	return &Session{
-		Session:     sshSession,
-		ID:          id,
-		SandboxName: sandboxName,
-		Agt:         a,
+		Session: sshSession,
+		ID:      id,
+		Sandbox: sandboxName,
+		Agt:     a,
 	}
 }
 
@@ -115,6 +115,7 @@ func (m *SessionManager) RemoveOldSandboxes() {
 	logger := agt.Logger
 
 	if agt.Config.KeepSandboxes == 0 {
+		// does not clean up sandboxes automatically.
 		return
 	}
 
@@ -140,14 +141,14 @@ func (m *SessionManager) RemoveOldSandboxes() {
 
 	for i := 0; i < removes; i++ {
 		file := files[i]
-		sandboxName := file.Name()
+		sandbox := file.Name()
 
-		if m.IsActiveSandbox(sandboxName) {
-			logger.Debugf("skipped to delete %s. because this is active sandbox", sandboxName)
+		if m.IsActiveSandbox(sandbox) {
+			logger.Debugf("skipped to delete %s. because this is active sandbox", sandbox)
 			continue
 		}
 
-		sandboxPath := filepath.Join(sandboxesDir, sandboxName)
+		sandboxPath := filepath.Join(sandboxesDir, sandbox)
 		if err := os.RemoveAll(sandboxPath); err != nil {
 			logger.Error(err)
 		}
