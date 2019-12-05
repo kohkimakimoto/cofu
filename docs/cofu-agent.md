@@ -181,6 +181,7 @@ The `functions.x` section defines a function. `x` is the name of the function.
 
 ```toml
 [functions.php]
+user = "appuser"
 entrypoint = [ "/bin/bash", "-c", """
 DOCKER_RUN_OPTIONS=""
 if [[ -n "${COFU_AGENT_PTY}" ]]; then
