@@ -102,11 +102,19 @@ func (a *Agent) Start() error {
 	return nil
 }
 
+func (a *Agent) LookupFunction(name string) *FunctionConfig {
+	c := a.Config
+	if fn, ok := c.Functions[name]; ok {
+		return fn
+	}
+	return nil
+}
+
 func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	defaultUmask := syscall.Umask(0)
 	defer syscall.Umask(defaultUmask)
 
-	sandBoxDir := filepath.Join(a.Config.SandboxesDirectory, sess.SandboxName)
+	sandBoxDir := a.SandboxDir(sess)
 	if _, err := os.Stat(sandBoxDir); os.IsNotExist(err) {
 		err = os.MkdirAll(sandBoxDir, os.FileMode(0777))
 		if err != nil {
@@ -115,4 +123,8 @@ func (a *Agent) CreateSandBoxDirIfNotExist(sess *Session) (string, error) {
 	}
 
 	return sandBoxDir, nil
+}
+
+func (a *Agent) SandboxDir(sess *Session) string {
+	return filepath.Join(a.Config.SandboxesDirectory, sess.Sandbox)
 }
