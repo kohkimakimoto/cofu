@@ -64,11 +64,25 @@ A sandbox is a directory that is created when a SSH client connected to Cofu Age
 
 ### Environment Variables
 
-It's often helpful to store some configuration values in environment variables. You can config arbitrary environment variables. Cofu Agent sets these to the ssh session processes.
+It's often helpful to store some configuration values in environment variables. You can set arbitrary environment variables. Cofu Agent sets these to your SSH session.
+
+Additionally, Cofu Agent sets some environment variables to your SSH session by default. The following are list of the variables:
+
+* `COFU_AGENT_SANDBOX`: Sandbox name.
+
+* `COFU_AGENT_SANDBOX_DIR`: Sandbox directory path.
+
+* `COFU_AGENT_VERSION`: Cofu Agent version. Example: `COFU_AGENT_VERSION=0.17.0`.
+
+* `COFU_AGENT_SESSION`, `COFU_AGENT_SESSION_ID`: Unique session ID that Cofu Agent allocates. Example: `COFU_AGENT_SESSION=20191206110912928`.
+
+* `COFU_AGENT_PTY`: Sets `1`, if the SSH session allocates PTY. Example: `COFU_AGENT_PTY=1`
+
+* `COFU_COMMAND`: The executable command path of the cofu. Example: `COFU_COMMAND=/usr/bin/cofu`.
 
 ### Functions
 
-Functions define custom endpoint. Functions are executed when the SSH client connected to Cofu Agent. You can specify the commands, executing user and group in the function definitions. the function names are exposed as a ssh username.
+Functions define custom endpoint. Functions are executed when the SSH client connected to Cofu Agent. You can specify the commands, executing user and group in the function definitions. The function names are exposed as a ssh username.
 
 ## Configuration
 
