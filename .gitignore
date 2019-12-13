@@ -6,6 +6,7 @@ Thumbs.db
 .vscode/
 /vendor
 .vagrant
+/.envrc
 /_work
 
 node_modules/
